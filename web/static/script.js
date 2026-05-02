@@ -139,13 +139,9 @@ async function updatePing() {
         const dot = document.getElementById('onlineDot');
         const text = document.getElementById('pingText');
         
-        if (data.online) {
-            dot.className = 'online-dot online';
-            text.innerHTML = 'ONLINE';
-        } else {
-            dot.className = 'online-dot offline';
-            text.innerHTML = 'OFFLINE';
-        }
+        dot.className = 'online-dot online';
+        text.innerHTML = 'PC ACCESSIBLE';
+        
     } catch(e) {
         document.getElementById('onlineDot').className = 'online-dot offline';
         document.getElementById('pingText').innerHTML = '● ERROR';
