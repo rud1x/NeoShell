@@ -32,12 +32,26 @@ DEFAULT_APPS_PATH = f"/mnt/c/Users/{WIN_USER}/NeoShellApps"
 
 APPS_DIR = config.get("apps_path", DEFAULT_APPS_PATH)
 
-
 # Создаём папку для приложений, если её нет
 Path(APPS_DIR).mkdir(parents=True, exist_ok=True)
 
 FAILED_ATTEMPTS_FILE = Path.home() / ".neoshell" / "failed_attempts.json"
 BLOCK_DURATION = 300
+
+def free_port(port):
+    """Освобождает порт перед запуском сервера"""
+    try:
+        # Убиваем процессы Python на этом порту
+        subprocess.run(f"sudo pkill -9 -f 'server.py'", shell=True, capture_output=True)
+        subprocess.run(f"sudo fuser -k {port}/tcp", shell=True, capture_output=True)
+        
+        # Для WSL: убиваем через netsh
+        subprocess.run(f'powershell.exe -Command "netsh interface portproxy delete v4tov4 listenport={port} listenaddress=0.0.0.0"', 
+                      shell=True, capture_output=True)
+        time.sleep(1)
+        return True
+    except:
+        return False
 
 def load_failed_attempts():
     if FAILED_ATTEMPTS_FILE.exists():
@@ -152,7 +166,6 @@ async def open_browser(query: str, key: str):
         run_cmd(f'cmd.exe /c start "https://www.google.com/search?q={encoded}"')
     return {"success": True}
 
-
 @app.get("/api/apps")
 async def list_apps(key: str):
     check_key(key)
@@ -163,7 +176,6 @@ async def list_apps(key: str):
             if f.suffix.lower() in ['.lnk', '.url', '.exe', '.bat']:
                 apps.append({"name": f.stem, "file": f.name})
     else:
-        # Создаём папку если её нет
         apps_path.mkdir(parents=True, exist_ok=True)
     return {"apps": sorted(apps, key=lambda x: x["name"]), "path": str(apps_path)}
 
@@ -174,7 +186,6 @@ async def run_app(filename: str, key: str):
     if not path.exists():
         return {"success": False, "error": f"File not found: {filename}"}
     
-    # Конвертируем WSL путь в Windows путь
     win_path = str(path).replace("/mnt/c/", "C:/").replace("/", "\\")
     result = run_cmd(f'cmd.exe /c start "" "{win_path}"')
     return result
@@ -200,7 +211,6 @@ async def icon_192():
     icon_path = Path(__file__).parent / "static" / "icon-192.png"
     if icon_path.exists():
         return FileResponse(icon_path)
-    # Создаём заглушку, если иконки нет
     return JSONResponse(status_code=404, content={"error": "Icon not found"})
 
 @app.get("/static/icon-512.png")
@@ -220,10 +230,14 @@ async def index():
 
 if __name__ == "__main__":
     import uvicorn
+    
+    # АВТООСВОБОЖДЕНИЕ ПОРТА ПЕРЕД ЗАПУСКОМ
+    print(f"\n[NeoShell] Освобождение порта {PORT}...")
+    free_port(PORT)
+    
     # Получаем правильный IP
     try:
         ip = socket.gethostbyname(socket.gethostname())
-        # Если IP localhost, пробуем найти реальный
         if ip.startswith('127.'):
             result = subprocess.run("ip route get 1 | awk '{print $NF;exit}'", shell=True, capture_output=True, text=True)
             if result.returncode == 0 and result.stdout.strip():
@@ -239,4 +253,5 @@ if __name__ == "__main__":
     print(f"  Port: {PORT}")
     print(f"  Apps Path: {APPS_DIR}")
     print("="*50 + "\n")
+    
     uvicorn.run(app, host="0.0.0.0", port=PORT)
