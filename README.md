@@ -4,8 +4,7 @@
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](http://makeapullrequest.com)
 
 **Управляй своим ПК с телефона через Wi-Fi. Красивый веб-интерфейс, безопасный SSH-туннель, клик-клик — и готово.**
-
-![NeoShell Demo](docs/screenshots/demo.gif)
+**Прога еще в бете и собрана на коленке за день, если будет интересно продолжу развивать проект**
 
 ---
 
