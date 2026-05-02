@@ -19,8 +19,21 @@ R='\033[91m'
 C='\033[96m'
 RST='\033[0m'
 
+# Функция анимации печати с принудительным сбросом буфера
+type_animation() {
+    local text="$1"
+    local delay="${2:-0.03}"
+    for ((i=0; i<${#text}; i++)); do
+        echo -n "${text:$i:1}"
+        # Принудительно сбрасываем буфер для плавной анимации
+        printf '' > /dev/null 2>&1
+        sleep "$delay"
+    done
+    echo
+}
+
 # Баннер
-clear
+clear 2>/dev/null || true
 echo -e "${Y}"
 echo "     __           __ _          _ _  "
 echo "  /\ \ \___  ___ / _\ |__   ___| | | "
@@ -28,17 +41,6 @@ echo " /  \/ / _ \/ _ \\\\ \| '_ \ / _ \ | | "
 echo "/ /\  /  __/ (_) |\ \ | | |  __/ | | "
 echo "\_\ \/ \___|\___/\__/_| |_|\___|_|_| "
 echo -e "${RST}\n"
-
-# Функция анимации печати
-type_animation() {
-    local text="$1"
-    local delay="${2:-0.03}"
-    for ((i=0; i<${#text}; i++)); do
-        echo -n "${text:$i:1}"
-        sleep "$delay"
-    done
-    echo
-}
 
 # Приветствие
 type_animation "rudix: Привет! Сейчас я помогу установить NeoShell на твой ПК." 0.04
@@ -106,14 +108,14 @@ is_pip_installed() {
 if is_pip_installed fastapi; then
     echo -e "   ${Y}⚠${RST} FastAPI уже установлен"
 else
-    pip3 install fastapi --break-system-packages -q
+    pip3 install fastapi --break-system-packages -q 2>/dev/null
     echo -e "   ${G}✓${RST} FastAPI установлен"
 fi
 
 if is_pip_installed uvicorn; then
     echo -e "   ${Y}⚠${RST} Uvicorn уже установлен"
 else
-    pip3 install uvicorn --break-system-packages -q
+    pip3 install uvicorn --break-system-packages -q 2>/dev/null
     echo -e "   ${G}✓${RST} Uvicorn установлен"
 fi
 sleep 0.3
@@ -178,7 +180,7 @@ echo ""
 
 # Очищаем консоль и показываем баннер снова
 sleep 2
-clear
+clear 2>/dev/null || true
 echo -e "${Y}"
 echo "     __           __ _          _ _  "
 echo "  /\ \ \___  ___ / _\ |__   ___| | | "
