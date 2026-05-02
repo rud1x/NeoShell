@@ -1,6 +1,7 @@
 #!/bin/bash
 # ============================================
 # NeoShell Installer for WSL
+# Устанавливает NeoShell из GitHub репозитория
 # ============================================
 
 set -e
@@ -53,7 +54,9 @@ WIN_USER=$(cmd.exe /c "echo %USERNAME%" 2>/dev/null | tr -d '\r' | tr -d '\n')
 WSL_DISTRO=$(wsl.exe -l -q 2>/dev/null | head -1 | tr -d '\r')
 [ -z "$WSL_DISTRO" ] && WSL_DISTRO="Debian"
 
-# Правильный локальный IP (192.168.x.x)
+REPO_URL="https://raw.githubusercontent.com/rud1x/NeoShell/main"
+
+# Правильный локальный IP
 REAL_IP=$(ip -4 addr show | grep -oP '(?<=inet\s)\d+(\.\d+){3}' | grep -v '127.0.0.1' | grep -v '10.' | grep -v '26.' | head -1)
 [ -z "$REAL_IP" ] && REAL_IP="192.168.1.21"
 
@@ -115,25 +118,37 @@ else
 fi
 sleep 0.3
 
-# Шаг 5 - Создание скрипта автозагрузки Windows
-echo -e "${C}[5/7]${RST} Создание скрипта автозагрузки Windows..."
+# Шаг 5 - Скачиваем файлы с GitHub
+echo -e "${C}[5/7]${RST} Скачивание файлов сервера..."
+
+# Скачиваем server.py
+curl -sL "$REPO_URL/web/server.py" -o ~/.neoshell/web/server.py
+
+# Скачиваем статику
+curl -sL "$REPO_URL/web/static/index.html" -o ~/.neoshell/web/static/index.html
+curl -sL "$REPO_URL/web/static/style.css" -o ~/.neoshell/web/static/style.css
+curl -sL "$REPO_URL/web/static/script.js" -o ~/.neoshell/web/static/script.js
+
+# Скачиваем конфигуратор
+curl -sL "$REPO_URL/neoshell_config.py" -o ~/.neoshell/neoshell_config.py
+
+echo -e "   ${G}✓${RST} Файлы загружены"
+sleep 0.3
+
+# Шаг 6
+echo -e "${C}[6/7]${RST} Настройка автозагрузки..."
 
 WIN_STARTUP="/mnt/c/Users/$WIN_USER/AppData/Roaming/Microsoft/Windows/Start Menu/Programs/Startup"
 mkdir -p "$WIN_STARTUP"
 
-# Создаём VBS скрипт
+# Создаём VBS скрипт для автозагрузки
 cat > "$WIN_STARTUP/NeoShell_Server.vbs" << EOF
 CreateObject("WScript.Shell").Run "wsl -d $WSL_DISTRO -u $WIN_USER bash -c 'cd /home/$WIN_USER/.neoshell/web && nohup python3 server.py > ../logs/server.log 2>&1 &'", 0, False
 EOF
 
-# Удаляем старый BAT файл, если есть
 rm -f "$WIN_STARTUP/NeoShell_Server.bat" 2>/dev/null
 
-echo -e "   ${G}✓${RST} VBS скрипт автозагрузки создан"
-sleep 0.3
-
-# Шаг 6
-echo -e "${C}[6/7]${RST} Создание start.sh..."
+# Создаём start.sh для ручного запуска
 cat > ~/.neoshell/start.sh << 'STARTEOF'
 #!/bin/bash
 CONFIG_FILE="$HOME/.neoshell/config.json"
@@ -146,13 +161,14 @@ nohup python3 server.py > ../logs/server.log 2>&1 &
 echo "NeoShell server started on port $PORT"
 STARTEOF
 chmod +x ~/.neoshell/start.sh
-echo -e "   ${G}✓${RST} start.sh создан"
+
+echo -e "   ${G}✓${RST} Автозагрузка настроена"
 sleep 0.3
 
 # Шаг 7
 echo -e "${C}[7/7]${RST} Настройка sudo для fuser..."
 echo "$WIN_USER ALL=(ALL) NOPASSWD: /usr/bin/fuser" | sudo tee /etc/sudoers.d/neoshell > /dev/null 2>&1
-echo -e "   ${G}✓${RST} Готово""   ${G}✓${RST} Готово"
+echo -e "   ${G}✓${RST} Готово"
 
 echo ""
 echo -e "${G}════════════════════════════════════════════════════════════${RST}"
@@ -238,4 +254,3 @@ sleep 0.5
 echo ""
 echo -e "${G}🚀 Удачного использования!${RST}"
 echo ""
-
