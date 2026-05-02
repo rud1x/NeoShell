@@ -39,13 +39,11 @@ FAILED_ATTEMPTS_FILE = Path.home() / ".neoshell" / "failed_attempts.json"
 BLOCK_DURATION = 300
 
 def free_port(port):
-    """Освобождает порт перед запуском сервера"""
+    """Освобождает порт от других процессов (не убивает себя)"""
     try:
-        # Убиваем процессы Python на этом порту
-        subprocess.run(f"sudo pkill -9 -f 'server.py'", shell=True, capture_output=True)
-        subprocess.run(f"sudo fuser -k {port}/tcp", shell=True, capture_output=True)
-        
-        # Для WSL: убиваем через netsh
+        # Убиваем ТОЛЬКО чужие процессы
+        result = subprocess.run(f"sudo fuser -k {port}/tcp 2>/dev/null | grep -v $$", shell=True, capture_output=True)
+        # Удаляем проброс порта
         subprocess.run(f'powershell.exe -Command "netsh interface portproxy delete v4tov4 listenport={port} listenaddress=0.0.0.0"', 
                       shell=True, capture_output=True)
         time.sleep(1)
@@ -233,7 +231,7 @@ if __name__ == "__main__":
     
     # АВТООСВОБОЖДЕНИЕ ПОРТА ПЕРЕД ЗАПУСКОМ
     print(f"\n[NeoShell] Освобождение порта {PORT}...")
-    free_port(PORT)
+    #free_port(PORT)
     
     # Получаем правильный IP
     try:
