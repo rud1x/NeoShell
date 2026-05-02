@@ -27,7 +27,11 @@ with open(CONFIG_FILE) as f:
 
 SECRET_KEY = config.get("secret_key", "1234")
 PORT = config.get("port", 8000)
-APPS_DIR = config.get("apps_path", "/mnt/c/Users/rudix/NeoShellApps")
+WIN_USER = os.environ.get("USERNAME") or os.environ.get("USER") or "rudix"
+DEFAULT_APPS_PATH = f"/mnt/c/Users/{WIN_USER}/NeoShellApps"
+
+APPS_DIR = config.get("apps_path", DEFAULT_APPS_PATH)
+
 
 # Создаём папку для приложений, если её нет
 Path(APPS_DIR).mkdir(parents=True, exist_ok=True)
@@ -147,6 +151,7 @@ async def open_browser(query: str, key: str):
         encoded = urllib.parse.quote_plus(query)
         run_cmd(f'cmd.exe /c start "https://www.google.com/search?q={encoded}"')
     return {"success": True}
+
 
 @app.get("/api/apps")
 async def list_apps(key: str):
