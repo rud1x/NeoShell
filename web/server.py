@@ -29,28 +29,37 @@ SECRET_KEY = config.get("secret_key", "1234")
 PORT = config.get("port", 8000)
 WIN_USER = os.environ.get("USERNAME") or os.environ.get("USER") or "rudix"
 DEFAULT_APPS_PATH = f"/mnt/c/Users/{WIN_USER}/NeoShellApps"
-
 APPS_DIR = config.get("apps_path", DEFAULT_APPS_PATH)
-
-# Создаём папку для приложений, если её нет
 Path(APPS_DIR).mkdir(parents=True, exist_ok=True)
 
 FAILED_ATTEMPTS_FILE = Path.home() / ".neoshell" / "failed_attempts.json"
 BLOCK_DURATION = 300
 
-def free_port(port):
-    """Освобождает порт от других процессов (не убивает себя)"""
+# ========== ФУНКЦИИ ОЧИСТКИ ПОРТА ==========
+def kill_process_on_port(port):
+    """Жёстко убивает процесс, занимающий порт"""
     try:
-        # Убиваем ТОЛЬКО чужие процессы
-        result = subprocess.run(f"sudo fuser -k {port}/tcp 2>/dev/null | grep -v $$", shell=True, capture_output=True)
-        # Удаляем проброс порта
-        subprocess.run(f'powershell.exe -Command "netsh interface portproxy delete v4tov4 listenport={port} listenaddress=0.0.0.0"', 
-                      shell=True, capture_output=True)
-        time.sleep(1)
+        # Через fuser
+        subprocess.run(f"sudo fuser -k {port}/tcp 2>/dev/null", shell=True)
+        # Через lsof (альтернатива)
+        result = subprocess.run(f"sudo lsof -t -i:{port}", shell=True, capture_output=True, text=True)
+        if result.stdout.strip():
+            for pid in result.stdout.strip().split():
+                subprocess.run(f"sudo kill -9 {pid}", shell=True)
         return True
     except:
         return False
 
+def clean_portproxy(port):
+    """Удаляет проброс порта в Windows"""
+    try:
+        subprocess.run(f'powershell.exe -Command "netsh interface portproxy delete v4tov4 listenport={port} listenaddress=0.0.0.0"', 
+                      shell=True, capture_output=True)
+        return True
+    except:
+        return False
+
+# ========== ОСТАЛЬНЫЕ ФУНКЦИИ ==========
 def load_failed_attempts():
     if FAILED_ATTEMPTS_FILE.exists():
         with open(FAILED_ATTEMPTS_FILE) as f:
@@ -101,6 +110,7 @@ def get_ping_status():
     result = run_cmd("ping -c 1 -W 2 192.168.1.21 2>/dev/null | grep '1 received'")
     return result["success"] and "1 received" in result["output"]
 
+# ========== API ENDPOINTS ==========
 @app.get("/api/status")
 async def status(key: str):
     check_key(key)
@@ -183,7 +193,6 @@ async def run_app(filename: str, key: str):
     path = Path(APPS_DIR) / filename
     if not path.exists():
         return {"success": False, "error": f"File not found: {filename}"}
-    
     win_path = str(path).replace("/mnt/c/", "C:/").replace("/", "\\")
     result = run_cmd(f'cmd.exe /c start "" "{win_path}"')
     return result
@@ -226,14 +235,17 @@ async def index():
             return HTMLResponse(content=f.read())
     return HTMLResponse(content="<h1>NeoShell</h1><p>Installation incomplete. Please check static files.</p>", status_code=500)
 
+# ========== ЗАПУСК СЕРВЕРА ==========
 if __name__ == "__main__":
     import uvicorn
     
-    # АВТООСВОБОЖДЕНИЕ ПОРТА ПЕРЕД ЗАПУСКОМ
-    print(f"\n[NeoShell] Освобождение порта {PORT}...")
-    #free_port(PORT)
+    # 1. ОЧИСТКА ПОРТА ПЕРЕД ЗАПУСКОМ
+    print(f"\n[NeoShell] Очистка порта {PORT}...")
+    kill_process_on_port(PORT)
+    clean_portproxy(PORT)
+    time.sleep(1)
     
-    # Получаем правильный IP
+    # 2. ПОЛУЧАЕМ IP
     try:
         ip = socket.gethostbyname(socket.gethostname())
         if ip.startswith('127.'):
@@ -252,4 +264,14 @@ if __name__ == "__main__":
     print(f"  Apps Path: {APPS_DIR}")
     print("="*50 + "\n")
     
-    uvicorn.run(app, host="0.0.0.0", port=PORT)
+    # 3. ЗАПУСК UVICORN С SO_REUSEADDR
+    uvicorn.run(
+        app, 
+        host="0.0.0.0", 
+        port=PORT,
+        log_level="warning",
+        # Эти параметры помогают с портами
+        loop="asyncio",
+        limit_concurrency=10,
+        timeout_keep_alive=5
+    )
