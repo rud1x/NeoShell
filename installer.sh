@@ -4,8 +4,7 @@
 # Устанавливает NeoShell из GitHub репозитория
 # ============================================
 
-# Перенаправляем stdin из /dev/null, чтобы скрипт не конфликтовал с pipe
-exec < /dev/null
+set -e
 
 # Проверка запуска из WSL
 if ! grep -qi microsoft /proc/version && ! grep -qi wsl /proc/version; then
@@ -20,7 +19,17 @@ R='\033[91m'
 C='\033[96m'
 RST='\033[0m'
 
-# Функция анимации
+# Баннер
+clear
+echo -e "${Y}"
+echo "     __           __ _          _ _  "
+echo "  /\ \ \___  ___ / _\ |__   ___| | | "
+echo " /  \/ / _ \/ _ \\\\ \| '_ \ / _ \ | | "
+echo "/ /\  /  __/ (_) |\ \ | | |  __/ | | "
+echo "\_\ \/ \___|\___/\__/_| |_|\___|_|_| "
+echo -e "${RST}\n"
+
+# Функция анимации печати
 type_animation() {
     local text="$1"
     local delay="${2:-0.03}"
@@ -31,15 +40,6 @@ type_animation() {
     echo
 }
 
-# Баннер
-echo -e "${Y}"
-echo "     __           __ _          _ _  "
-echo "  /\ \ \___  ___ / _\ |__   ___| | | "
-echo " /  \/ / _ \/ _ \\\\ \| '_ \ / _ \ | | "
-echo "/ /\  /  __/ (_) |\ \ | | |  __/ | | "
-echo "\_\ \/ \___|\___/\__/_| |_|\___|_|_| "
-echo -e "${RST}\n"
-
 # Приветствие
 type_animation "rudix: Привет! Сейчас я помогу установить NeoShell на твой ПК." 0.04
 sleep 0.5
@@ -48,31 +48,27 @@ sleep 1
 echo ""
 
 # Определение переменных
-echo -e "${C}[1/7]${RST} Определение пользователя..."
 WIN_USER=$(cmd.exe /c "echo %USERNAME%" 2>/dev/null | tr -d '\r' | tr -d '\n')
 [ -z "$WIN_USER" ] && WIN_USER=$(whoami)
-echo -e "   ${G}✓${RST} Пользователь: ${Y}$WIN_USER${RST}"
 
-echo -e "${C}[2/7]${RST} Определение дистрибутива WSL..."
 WSL_DISTRO=$(wsl.exe -l -q 2>/dev/null | head -1 | tr -d '\r')
 [ -z "$WSL_DISTRO" ] && WSL_DISTRO="Debian"
-echo -e "   ${G}✓${RST} Дистрибутив: ${Y}$WSL_DISTRO${RST}"
 
 REPO_URL="https://raw.githubusercontent.com/rud1x/NeoShell/main"
 
 # Правильный локальный IP
-REAL_IP=$(ip -4 addr show 2>/dev/null | grep -oP '(?<=inet\s)\d+(\.\d+){3}' | grep -v '127.0.0.1' | grep -v '10.' | grep -v '26.' | head -1)
+REAL_IP=$(ip -4 addr show | grep -oP '(?<=inet\s)\d+(\.\d+){3}' | grep -v '127.0.0.1' | grep -v '10.' | grep -v '26.' | head -1)
 [ -z "$REAL_IP" ] && REAL_IP="192.168.1.21"
 
-# Шаг 3
-echo -e "${C}[3/7]${RST} Создание структуры проекта..."
+# Шаг 1
+echo -e "${C}[1/7]${RST} Создание структуры проекта..."
 mkdir -p ~/.neoshell/web/static
 mkdir -p ~/.neoshell/logs
 echo -e "   ${G}✓${RST} Папки созданы"
 sleep 0.3
 
-# Шаг 4
-echo -e "${C}[4/7]${RST} Генерация секретного ключа..."
+# Шаг 2
+echo -e "${C}[2/7]${RST} Генерация секретного ключа..."
 if [ -f ~/.neoshell/config.json ]; then
     SECRET_KEY=$(grep -o '"secret_key": "[^"]*"' ~/.neoshell/config.json | cut -d'"' -f4)
     echo -e "   ${Y}⚠${RST} Конфиг уже существует, ключ: ${Y}$SECRET_KEY${RST}"
@@ -90,61 +86,69 @@ EOF
 fi
 sleep 0.3
 
-# Шаг 5
-echo -e "${C}[5/7]${RST} Создание папки для ярлыков..."
+# Шаг 3
+echo -e "${C}[3/7]${RST} Создание папки для ярлыков..."
 APPS_DIR="C:\\Users\\$WIN_USER\\NeoShellApps"
-mkdir -p "/mnt/c/Users/$WIN_USER/NeoShellApps" 2>/dev/null || true
+mkdir -p "/mnt/c/Users/$WIN_USER/NeoShellApps"
 echo -e "   ${G}✓${RST} Папка: ${Y}$APPS_DIR${RST}"
 sleep 0.3
 
-# Шаг 6
-echo -e "${C}[6/7]${RST} Установка зависимостей..."
+# Шаг 4
+echo -e "${C}[4/7]${RST} Установка зависимостей..."
 if ! command -v pip3 &> /dev/null; then
-    echo -e "   ${Y}⚠ Устанавливаем pip3...${RST}"
     sudo apt update -qq && sudo apt install python3-pip -y -qq
 fi
 
-# Проверка и установка fastapi
-if python3 -c "import fastapi" 2>/dev/null; then
-    echo -e "   ${Y}⚠ FastAPI уже установлен${RST}"
+is_pip_installed() {
+    python3 -c "import $1" 2>/dev/null && return 0 || return 1
+}
+
+if is_pip_installed fastapi; then
+    echo -e "   ${Y}⚠${RST} FastAPI уже установлен"
 else
-    echo -e "   ${C}→ Устанавливаем FastAPI...${RST}"
-    pip3 install fastapi --break-system-packages -q 2>/dev/null || pip3 install fastapi -q 2>/dev/null
-    echo -e "   ${G}✓ FastAPI установлен${RST}"
+    pip3 install fastapi --break-system-packages -q
+    echo -e "   ${G}✓${RST} FastAPI установлен"
 fi
 
-# Проверка и установка uvicorn
-if python3 -c "import uvicorn" 2>/dev/null; then
-    echo -e "   ${Y}⚠ Uvicorn уже установлен${RST}"
+if is_pip_installed uvicorn; then
+    echo -e "   ${Y}⚠${RST} Uvicorn уже установлен"
 else
-    echo -e "   ${C}→ Устанавливаем Uvicorn...${RST}"
-    pip3 install uvicorn --break-system-packages -q 2>/dev/null || pip3 install uvicorn -q 2>/dev/null
-    echo -e "   ${G}✓ Uvicorn установлен${RST}"
+    pip3 install uvicorn --break-system-packages -q
+    echo -e "   ${G}✓${RST} Uvicorn установлен"
 fi
 sleep 0.3
 
-# Шаг 7
-echo -e "${C}[7/7]${RST} Скачивание файлов сервера..."
-echo -e "   ${C}→ Загружаем server.py...${RST}"
+# Шаг 5 - Скачиваем файлы с GitHub
+echo -e "${C}[5/7]${RST} Скачивание файлов сервера..."
+
+# Скачиваем server.py
 curl -sL "$REPO_URL/web/server.py" -o ~/.neoshell/web/server.py
-echo -e "   ${C}→ Загружаем статические файлы...${RST}"
+
+# Скачиваем статику
 curl -sL "$REPO_URL/web/static/index.html" -o ~/.neoshell/web/static/index.html
 curl -sL "$REPO_URL/web/static/style.css" -o ~/.neoshell/web/static/style.css
 curl -sL "$REPO_URL/web/static/script.js" -o ~/.neoshell/web/static/script.js
-echo -e "   ${C}→ Загружаем конфигуратор...${RST}"
+
+# Скачиваем конфигуратор
 curl -sL "$REPO_URL/neoshell_config.py" -o ~/.neoshell/neoshell_config.py
-echo -e "   ${G}✓ Все файлы загружены${RST}"
+
+echo -e "   ${G}✓${RST} Файлы загружены"
 sleep 0.3
 
-# Шаг 8
-echo -e "${C}[8/8]${RST} Настройка автозагрузки..."
-WIN_STARTUP="/mnt/c/Users/$WIN_USER/AppData/Roaming/Microsoft/Windows/Start Menu/Programs/Startup"
-mkdir -p "$WIN_STARTUP" 2>/dev/null || true
+# Шаг 6
+echo -e "${C}[6/7]${RST} Настройка автозагрузки..."
 
+WIN_STARTUP="/mnt/c/Users/$WIN_USER/AppData/Roaming/Microsoft/Windows/Start Menu/Programs/Startup"
+mkdir -p "$WIN_STARTUP"
+
+# Создаём VBS скрипт для автозагрузки
 cat > "$WIN_STARTUP/NeoShell_Server.vbs" << EOF
 CreateObject("WScript.Shell").Run "wsl -d $WSL_DISTRO -u $WIN_USER bash -c 'cd /home/$WIN_USER/.neoshell/web && nohup python3 server.py > ../logs/server.log 2>&1 &'", 0, False
 EOF
 
+rm -f "$WIN_STARTUP/NeoShell_Server.bat" 2>/dev/null
+
+# Создаём start.sh для ручного запуска
 cat > ~/.neoshell/start.sh << 'STARTEOF'
 #!/bin/bash
 CONFIG_FILE="$HOME/.neoshell/config.json"
@@ -158,8 +162,13 @@ echo "NeoShell server started on port $PORT"
 STARTEOF
 chmod +x ~/.neoshell/start.sh
 
+echo -e "   ${G}✓${RST} Автозагрузка настроена"
+sleep 0.3
+
+# Шаг 7
+echo -e "${C}[7/7]${RST} Настройка sudo для fuser..."
 echo "$WIN_USER ALL=(ALL) NOPASSWD: /usr/bin/fuser" | sudo tee /etc/sudoers.d/neoshell > /dev/null 2>&1
-echo -e "   ${G}✓ Автозагрузка настроена${RST}"
+echo -e "   ${G}✓${RST} Готово"
 
 echo ""
 echo -e "${G}════════════════════════════════════════════════════════════${RST}"
@@ -167,32 +176,81 @@ echo -e "${G}✅ УСТАНОВКА ЗАВЕРШЕНА!${RST}"
 echo -e "${G}════════════════════════════════════════════════════════════${RST}"
 echo ""
 
-# Финальные инструкции с анимацией
+# Очищаем консоль и показываем баннер снова
+sleep 2
+clear
+echo -e "${Y}"
+echo "     __           __ _          _ _  "
+echo "  /\ \ \___  ___ / _\ |__   ___| | | "
+echo " /  \/ / _ \/ _ \\\\ \| '_ \ / _ \ | | "
+echo "/ /\  /  __/ (_) |\ \ | | |  __/ | | "
+echo "\_\ \/ \___|\___/\__/_| |_|\___|_|_| "
+echo -e "${RST}\n"
+
+# Диалог с объяснением
 type_animation "rudix: Всё установлено! Теперь расскажу, что делать дальше." 0.04
 sleep 1
 echo ""
 
 type_animation "rudix: 1. ЗАПУСТИТЬ СЕРВЕР" 0.04
+type_animation "    Выполни команду в этом окне:" 0.03
 echo ""
 echo -e "       ${Y}cd ~/.neoshell/web && python3 server.py${RST}"
 echo ""
+type_animation "    Сервер начнёт работу. Не закрывай это окно!" 0.03
 sleep 1
+echo ""
 
 type_animation "rudix: 2. ПОДКЛЮЧИТЬСЯ С ТЕЛЕФОНА" 0.04
+type_animation "    Открой браузер на телефоне и введи:" 0.03
 echo ""
 echo -e "       ${Y}http://$REAL_IP:8000${RST}"
-echo -e "       Ключ: ${Y}$SECRET_KEY${RST}"
+echo ""
+type_animation "    Введи секретный ключ:" 0.03
+echo ""
+echo -e "       ${Y}$SECRET_KEY${RST}"
+echo ""
+type_animation "    Ключ запомнится в телефоне — повторно вводить не нужно." 0.03
+sleep 1
+echo ""
+
+type_animation "rudix: 3. ДОБАВИТЬ ЯРЛЫКИ ПРОГРАММ" 0.04
+type_animation "    Сейчас откроется папка. Кидай туда ярлыки:" 0.03
+type_animation "      • Из меню Пуск (.lnk)" 0.03
+type_animation "      • Ссылки на сайты (.url)" 0.03
+type_animation "      • Исполняемые файлы (.exe)" 0.03
+sleep 1
+echo ""
+
+# Открываем папку с ярлыками
+cmd.exe /c start explorer "C:\\Users\\$WIN_USER\\NeoShellApps" 2>/dev/null
+echo -e "   ${G}✓${RST} Папка открыта"
+sleep 1
+echo ""
+
+type_animation "rudix: 4. АВТОЗАГРУЗКА" 0.04
+type_animation "    Сервер уже добавлен в автозагрузку Windows." 0.03
+type_animation "    При каждом включении ПК он будет запускаться в фоне." 0.03
+sleep 1
+echo ""
+
+type_animation "rudix: 5. УПРАВЛЕНИЕ СЕРВЕРОМ" 0.04
+echo ""
+echo -e "   ${Y}cd ~/.neoshell && python3 neoshell_config.py${RST}  ${C}# Настройки порта и ключа${RST}"
+echo -e "   ${Y}pkill -f 'server.py'${RST}                           ${C}# Остановить сервер${RST}"
+echo -e "   ${Y}tail -f ~/.neoshell/logs/server.log${RST}            ${C}# Посмотреть логи${RST}"
 echo ""
 sleep 1
 
-type_animation "rudix: 3. ДОБАВИТЬ ЯРЛЫКИ ПРОГРАММ" 0.04
+type_animation "rudix: Если что-то не работает, проверь:" 0.04
+type_animation "   • Телефон в той же WiFi сети, что и ПК" 0.03
+type_animation "   • IP адрес: $REAL_IP" 0.03
+type_animation "   • Сервер запущен (команда выше)" 0.03
+sleep 1
 echo ""
-echo -e "       ${Y}C:\\Users\\$WIN_USER\\NeoShellApps${RST}"
-echo ""
-
-cmd.exe /c start explorer "C:\\Users\\$WIN_USER\\NeoShellApps" 2>/dev/null || true
 
 type_animation "rudix: ВСЁ ГОТОВО! Запускай сервер и пользуйся." 0.04
 sleep 0.5
 echo ""
 echo -e "${G}🚀 Удачного использования!${RST}"
+echo ""
