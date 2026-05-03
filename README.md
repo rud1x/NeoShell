@@ -33,11 +33,10 @@
 curl -sL https://raw.githubusercontent.com/rud1x/NeoShell/main/installer.sh -o /tmp/neoshell_install.sh && bash /tmp/neoshell_install.sh
 ```
 
-### На телефоне (Termux) — опционально
+### На телефоне в браузере
 
 ```bash
-pkg install openssh
-ssh user@ip -p port
+http://ip:port
 ```
 
 ---
