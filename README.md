@@ -3,7 +3,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](http://makeapullrequest.com)
 
-**Управляй своим ПК с телефона через Wi-Fi. Красивый веб-интерфейс, безопасный SSH-туннель, клик-клик — и готово.**
+**Управляй своим ПК с телефона через Wi-Fi. Красивый веб-интерфейс, локальный HTTP-туннель, клик-клик — и готово.**
 **Прога еще в бете и собрана на коленке за день, если будет интересно продолжу развивать проект**
 
 ---
