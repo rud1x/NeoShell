@@ -25,7 +25,7 @@
 
 ---
 
-## 🚀 Быстрая установка
+## 🚀 Быстрая установка 
 
 ### На ПК (WSL)
 
@@ -33,12 +33,7 @@
 curl -sL https://raw.githubusercontent.com/rud1x/NeoShell/main/installer.sh -o /tmp/neoshell_install.sh && bash /tmp/neoshell_install.sh
 ```
 
-### На телефоне в браузере
-
-```bash
-http://ip:port
-```
-
+#### ❗️ Работает только в WSL
 ---
 
 ## 📱 Подключение
