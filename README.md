@@ -86,3 +86,4 @@
 ## Скриншоты
 
 ![image](https://i.ibb.co/ymFMjdJw/Screenshot-20260503-002824-Chrome.jpg)
+![image](https://i.ibb.co/4HnrNKG/image.png)
