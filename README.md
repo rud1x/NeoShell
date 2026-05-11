@@ -4,9 +4,6 @@
 
 [![Stars](https://img.shields.io/github/stars/rud1x/NeoShell?style=for-the-badge&logo=github&color=yellow)](https://github.com/rud1x/NeoShell)
 [![Releases](https://img.shields.io/github/v/release/rud1x/NeoShell?style=for-the-badge&logo=github&color=orange)](https://github.com/rud1x/NeoShell/releases)
-[![Forks](https://img.shields.io/github/forks/rud1x/NeoShell?style=for-the-badge&logo=github&color=blue)](https://github.com/rud1x/NeoShell)
-[![Downloads](https://img.shields.io/github/downloads/rud1x/NeoShell/total?style=for-the-badge&logo=github&logoColor=white&color=blueviolet)](https://github.com/rud1x/NeoShell/releases)
-
 
 ---
 
