@@ -1,4 +1,6 @@
-# 🚀 NeoShell
+<p align="center">
+  <img src="https://i.ibb.co/gL2pJL2m/image.png" alt="NeoShell Preview" width="800"/>
+</p>
 
 **Управляй своим ПК с телефона через Wi-Fi. Красивый веб-интерфейс, просто запусти exe — и готово.**
 
