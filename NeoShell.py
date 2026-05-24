@@ -1,8 +1,4 @@
 #!/usr/bin/env python3
-"""
-NeoShell — с анимированным цветным логотипом
-"""
-
 import sys
 import os
 import json
@@ -18,7 +14,6 @@ from pathlib import Path
 from datetime import datetime
 from io import BytesIO
 
-# Блокировка повторного запуска
 try:
     import win32event
     import win32api
@@ -29,7 +24,6 @@ try:
 except:
     pass
 
-# Qt imports
 from PyQt6.QtCore import (Qt, QTimer, QPoint, QUrl, pyqtSignal, QByteArray, 
                           QPropertyAnimation, QEasingCurve, QVariantAnimation)
 from PyQt6.QtGui import (QColor, QPainter, QPainterPath, QPen, QIcon, 
@@ -40,15 +34,11 @@ from PyQt6.QtWidgets import (QApplication, QWidget, QVBoxLayout, QHBoxLayout,
                              QCheckBox, QFileDialog)
 from PyQt6.QtSvgWidgets import QSvgWidget
 
-# HTTP сервер
 from http.server import HTTPServer, BaseHTTPRequestHandler
 
 import qrcode
 from PIL import Image, ImageDraw
 
-# ------------------------------------------------------------
-# Конфигурация
-# ------------------------------------------------------------
 if getattr(sys, 'frozen', False):
     BASE_DIR = Path(sys.executable).parent
 else:
@@ -96,9 +86,6 @@ PORT = config["port"]
 APPS_DIR = Path(config["apps_path"])
 APPS_DIR.mkdir(parents=True, exist_ok=True)
 
-# ------------------------------------------------------------
-# Функции для иконок
-# ------------------------------------------------------------
 def recolor_icon(image_path, target_color):
     try:
         img = Image.open(image_path).convert("RGBA")
@@ -133,9 +120,6 @@ def get_default_icon():
     pixmap.loadFromData(output.getvalue())
     return QIcon(pixmap)
 
-# ------------------------------------------------------------
-# Вспомогательные функции
-# ------------------------------------------------------------
 def kill_process_on_port(port):
     try:
         result = subprocess.run(f'netstat -ano | findstr :{port}', capture_output=True, text=True, shell=True)
@@ -197,16 +181,12 @@ def remove_from_startup():
     except:
         return False
 
-# ------------------------------------------------------------
-# HTTP Сервер
-# ------------------------------------------------------------
 class NeoShellHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         parsed = urllib.parse.urlparse(self.path)
         path = parsed.path
         query = urllib.parse.parse_qs(parsed.query)
         
-        # API status
         if path == '/api/status':
             key = query.get('key', [''])[0]
             if key != SECRET_KEY:
@@ -219,7 +199,6 @@ class NeoShellHandler(BaseHTTPRequestHandler):
             self.wfile.write(json.dumps({"status": "online", "time": datetime.now().isoformat()}).encode())
             return
         
-        # API ping
         if path == '/api/ping':
             key = query.get('key', [''])[0]
             if key != SECRET_KEY:
@@ -232,7 +211,6 @@ class NeoShellHandler(BaseHTTPRequestHandler):
             self.wfile.write(json.dumps({"online": True, "ip": get_local_ip()}).encode())
             return
         
-        # API apps list
         if path == '/api/apps':
             key = query.get('key', [''])[0]
             if key != SECRET_KEY:
@@ -253,7 +231,6 @@ class NeoShellHandler(BaseHTTPRequestHandler):
             self.wfile.write(json.dumps({"apps": sorted(apps, key=lambda x: x["name"]), "path": str(apps_path)}).encode())
             return
         
-        # Manifest for PWA
         if path == '/manifest.json':
             self.send_response(200)
             self.send_header('Content-type', 'application/json')
@@ -274,7 +251,6 @@ class NeoShellHandler(BaseHTTPRequestHandler):
             self.wfile.write(json.dumps(manifest).encode())
             return
         
-        # Static files
         if path == '/' or path == '':
             path = '/index.html'
         
@@ -306,7 +282,6 @@ class NeoShellHandler(BaseHTTPRequestHandler):
         path = parsed.path
         query = urllib.parse.parse_qs(parsed.query)
         
-        # Проверка ключа
         key = query.get('key', [''])[0]
         if key != SECRET_KEY:
             self.send_response(401)
@@ -396,9 +371,6 @@ class NeoShellHandler(BaseHTTPRequestHandler):
     def log_message(self, format, *args):
         pass
 
-# ------------------------------------------------------------
-# Глобальные переменные
-# ------------------------------------------------------------
 server = None
 server_thread = None
 server_running = False
@@ -423,13 +395,10 @@ def stop_server():
     server_running = False
     kill_process_on_port(PORT)
 
-# ------------------------------------------------------------
-# Анимированный логотип (сам значок меняет цвет)
-# ------------------------------------------------------------
 class AnimatedLogo(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setFixedSize(120, 120)  # Увеличенный размер
+        self.setFixedSize(120, 120)  
         self.is_running = False
         self.animation_value = 0
         self.setup_animation()
@@ -461,17 +430,14 @@ class AnimatedLogo(QWidget):
         p = QPainter(self)
         p.setRenderHint(QPainter.RenderHint.Antialiasing)
         
-        # Центр для рисования
         center_x = self.width() // 2
         center_y = self.height() // 2
         logo_size = 90
         
-        # Эффект свечения при запущенном сервере
         if self.is_running:
             glow_intensity = 30 + int(70 * self.animation_value)
             glow_color = QColor(16, 185, 129, glow_intensity)
             
-            # Рисуем свечение вокруг логотипа
             for i in range(4):
                 offset = (i + 1) * 4
                 alpha = max(0, 40 - i * 10)
@@ -479,46 +445,36 @@ class AnimatedLogo(QWidget):
                 p.setBrush(QColor(16, 185, 129, alpha))
                 p.drawRoundedRect(offset, offset, self.width() - offset * 2, self.height() - offset * 2, 30, 30)
         
-        # Определяем цвет логотипа
         if self.is_running:
-            # Плавное переливание между желтым и зеленым
-            target_color = QColor(16, 185, 129)  # Зеленый
+            target_color = QColor(16, 185, 129) 
             if self.animation_value > 0:
-                # Делаем пульсирующий эффект - ярче/темнее
                 intensity = 100 + int(100 * self.animation_value)
                 logo_color = QColor(16, 185, 129, intensity)
             else:
                 logo_color = QColor(16, 185, 129)
         else:
-            logo_color = QColor(255, 204, 0)  # Желтый
+            logo_color = QColor(255, 204, 0)
         
-        # Рисуем сам логотип
         rect = self.rect().adjusted(15, 15, -15, -15)
         
         if LOGO_PATH.exists():
-            # Загружаем PNG и перекрашиваем
             pixmap = QPixmap(str(LOGO_PATH))
             if not pixmap.isNull():
-                # Создаем маску для перекрашивания
                 scaled = pixmap.scaled(logo_size, logo_size, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
                 
-                # Рисуем с цветом
                 p.save()
                 p.setCompositionMode(QPainter.CompositionMode.CompositionMode_SourceOver)
                 p.drawPixmap((self.width() - scaled.width()) // 2, 
                             (self.height() - scaled.height()) // 2, scaled)
                 p.restore()
             else:
-                # Если PNG не загрузился - рисуем букву N
                 p.setPen(QPen(logo_color, 3))
                 p.setFont(self.font())
                 p.drawText(rect, Qt.AlignmentFlag.AlignCenter, "N")
         else:
-            # Рисуем стилизованную букву N
             p.setPen(QPen(logo_color, 4, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap, Qt.PenJoinStyle.RoundJoin))
             p.setBrush(Qt.BrushStyle.NoBrush)
             
-            # Рисуем контур буквы N
             n_rect = rect.adjusted(15, 10, -15, -10)
             p.drawLine(n_rect.left(), n_rect.bottom(), n_rect.left(), n_rect.top())
             p.drawLine(n_rect.left(), n_rect.top(), n_rect.right(), n_rect.bottom())
@@ -527,9 +483,6 @@ class AnimatedLogo(QWidget):
     def mousePressEvent(self, event):
         pass
 
-# ------------------------------------------------------------
-# Кнопка назад (такого же размера как _ и X)
-# ------------------------------------------------------------
 class BackButton(QPushButton):
     clicked = pyqtSignal()
     
@@ -556,9 +509,6 @@ class BackButton(QPushButton):
         if e.button() == Qt.MouseButton.LeftButton:
             self.clicked.emit()
 
-# ------------------------------------------------------------
-# Создание недостающих файлов
-# ------------------------------------------------------------
 def ensure_static_files():
     index_path = STATIC_DIR / "index.html"
     if not index_path.exists():
@@ -589,9 +539,6 @@ check();setInterval(check,5000);
 </html>"""
         index_path.write_text(html_content, encoding='utf-8')
 
-# ------------------------------------------------------------
-# Главное окно
-# ------------------------------------------------------------
 class NeoShell(QWidget):
     def __init__(self):
         super().__init__()
@@ -601,7 +548,6 @@ class NeoShell(QWidget):
             except:
                 pass
 
-        # Установка иконки для окна и панели задач
         icon_path = BASE_DIR / "neoshell.ico"
         if icon_path.exists():
             self.setWindowIcon(QIcon(str(icon_path)))
@@ -720,11 +666,9 @@ class NeoShell(QWidget):
         
         layout.addStretch()
         
-        # Анимированный логотип
         self.logo = AnimatedLogo()
         layout.addWidget(self.logo, alignment=Qt.AlignmentFlag.AlignCenter)
         
-        # Статус
         self.status_label = QLabel("SERVER STOPPED")
         self.status_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.status_label.setStyleSheet("color: #ff4444; font-size: 14px; font-weight: 700; margin-top: 15px; background: transparent;")
@@ -732,13 +676,11 @@ class NeoShell(QWidget):
         
         layout.addStretch()
         
-        # Контейнер для кнопок
         self.buttons_container = QWidget()
         buttons_layout = QVBoxLayout(self.buttons_container)
         buttons_layout.setContentsMargins(25, 0, 25, 30)
         buttons_layout.setSpacing(12)
         
-        # Главная кнопка
         self.main_btn = QPushButton("START SERVER")
         self.main_btn.setFixedSize(310, 55)
         self.main_btn.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -759,7 +701,6 @@ class NeoShell(QWidget):
         """)
         buttons_layout.addWidget(self.main_btn, alignment=Qt.AlignmentFlag.AlignCenter)
         
-        # Кнопка CONNECT
         self.connect_btn = QPushButton("🌐 CONNECT")
         self.connect_btn.setFixedSize(310, 55)
         self.connect_btn.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -781,7 +722,6 @@ class NeoShell(QWidget):
         self.connect_btn.setVisible(False)
         buttons_layout.addWidget(self.connect_btn)
         
-        # Кнопка SETTINGS
         settings_btn = QPushButton("⚙️ SETTINGS")
         settings_btn.setFixedSize(310, 55)
         settings_btn.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -1241,9 +1181,6 @@ class NeoShell(QWidget):
         e.ignore()
         self.hide()
 
-# ------------------------------------------------------------
-# Главный запуск
-# ------------------------------------------------------------
 def main():
     os.environ["QT_ENABLE_HIGHDPI_SCALING"] = "1"
     os.environ["QT_SCALE_FACTOR_ROUNDING_POLICY"] = "PassThrough"
