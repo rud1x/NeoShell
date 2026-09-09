@@ -1,90 +1,229 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <meta name="theme-color" content="#ffcc00">
-    <link rel="manifest" href="/manifest.json">
-    <link rel="apple-touch-icon" href="/static/icon-192.png">
-    <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/light/style.css">
-    <link rel="stylesheet" href="style.css">
-    <link rel="icon" type="image/x-icon" href="favicon.ico">
-    <link rel="shortcut icon" href="favicon.ico">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="theme-color" content="#0A0A0C" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="apple-touch-icon" href="/static/icon-192.png" />
+    <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/light/style.css" />
+    <link rel="stylesheet" href="style.css" />
     <title>NeoShell</title>
 </head>
 <body>
-<div class="container">
-    <div class="banner">
-        <pre>
-     __           __ _          _ _  
-  /\ \ \___  ___ / _\ |__   ___| | | 
- /  \/ / _ \/ _ \\ \| '_ \ / _ \ | | 
-/ /\  /  __/ (_) |\ \ | | |  __/ | | 
-\_\ \/ \___|\___/\__/_| |_|\___|_|_|
+
+<!-- ===== LOGIN ===== -->
+<div id="loginOverlay">
+    <div class="login-box">
+        <div class="logo"><i class="ph-light ph-devices"></i></div>
+        <div class="title">NeoShell</div>
+        <div class="sub">Введите ключ доступа</div>
+        <input type="password" id="secretKey" class="login-input" placeholder="Введите ключ" autofocus />
+        <button class="login-btn" onclick="connect()">ПОДКЛЮЧИТЬСЯ</button>
+        <div id="loginError" class="login-error"></div>
     </div>
-    
-    <div id="loginPanel" class="login-panel">
-        <input type="password" id="secretKey" class="key-input" placeholder="Enter secret key">
-        <button class="connect-btn" onclick="connect()">CONNECT</button>
-        <div id="errorMsg" class="error-msg hidden"></div>
-    </div>
-    
-    <div id="mainPanel" class="hidden">
-        <!-- Status row -->
-        <div class="status-card">
-            <div class="online-text">
-                <div class="online-dot" id="onlineDot"></div>
-                <span id="pingText">Checking...</span>
-                <span id="pingTime"></span>
+</div>
+
+<!-- ===== APP ===== -->
+<div id="app">
+
+    <!-- HEADER -->
+    <header class="header">
+        <div class="header-left">
+            <div class="header-logo">NeoShell</div>
+        </div>
+        <div class="header-actions">
+            <button class="header-btn" id="pwaBtn" onclick="installPWA()" title="Добавить на экран" style="display:none;">
+                <i class="ph-light ph-download-simple"></i>
+            </button>
+            <button class="header-btn" onclick="refreshStatus()" title="Обновить">
+                <i class="ph-light ph-arrows-clockwise"></i>
+            </button>
+            <button class="header-btn" onclick="toggleSettings()" title="Настройки">
+                <i class="ph-light ph-gear"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- STATUS -->
+    <div class="status-bar">
+        <div class="status-card" id="statusCard">
+            <div class="status-glow" id="statusGlow"></div>
+            <div class="status-content">
+                <div class="status-top">
+                    <div class="status-dot" id="statusDot"></div>
+                    <div class="status-name" id="statusName">Подключение...</div>
+                    <div class="status-ping" id="statusPing">⚡ --ms</div>
+                </div>
+                <div class="status-bottom">
+                    <span class="status-label" id="statusLabel">● Проверка...</span>
+                    <span class="status-ip" id="statusIp">--</span>
+                </div>
             </div>
         </div>
-        
-        <!-- Action Buttons -->
-        <div class="action-row">
-            <div class="action-btn" onclick="sendApi('lock')"><i class="ph-light ph-lock-simple"></i> LOCK</div>
-            <div class="action-btn" onclick="sendApi('explorer')"><i class="ph-light ph-folder-open"></i> EXPLORER</div>
-            <div class="action-btn" onclick="sendApi('minimize_all')"><i class="ph-light ph-desktop"></i> MINIMIZE ALL</div>
-            <div class="action-btn" onclick="sendApi('task_manager')"><i class="ph-light ph-chart-line"></i> TASK MANAGER</div>
-            <div class="action-btn" onclick="sendApi('close_app')"><i class="ph-light ph-x-circle"></i> CLOSE APP</div>
+    </div>
+
+    <!-- CONTENT -->
+    <main class="content">
+
+        <!-- MENU -->
+        <div class="menu-section">
+            <div class="menu-group">
+                <div class="menu-group-label">Управление</div>
+                <div class="menu-list">
+                    <div class="menu-item" onclick="sendCmd('lock')">
+                        <span class="icon"><i class="ph-light ph-lock-simple"></i></span>
+                        <span class="label">Блокировка</span>
+                    </div>
+                    <div class="menu-item" onclick="sendCmd('explorer')">
+                        <span class="icon"><i class="ph-light ph-folder-open"></i></span>
+                        <span class="label">Проводник</span>
+                    </div>
+                    <div class="menu-item" onclick="sendCmd('minimize_all')">
+                        <span class="icon"><i class="ph-light ph-desktop"></i></span>
+                        <span class="label">Свернуть все</span>
+                    </div>
+                    <div class="menu-item" onclick="sendCmd('task_manager')">
+                        <span class="icon"><i class="ph-light ph-chart-line"></i></span>
+                        <span class="label">Диспетчер задач</span>
+                    </div>
+                    <div class="menu-item" onclick="sendCmd('close_app')">
+                        <span class="icon"><i class="ph-light ph-x-circle"></i></span>
+                        <span class="label">Закрыть приложение</span>
+                    </div>
+                    <div class="menu-item" onclick="openBrowserDialog()">
+                        <span class="icon"><i class="ph-light ph-browser"></i></span>
+                        <span class="label">Открыть в браузере</span>
+                    </div>
+                    <div class="menu-item" onclick="openAppsPage()">
+                        <span class="icon"><i class="ph-light ph-grid-four"></i></span>
+                        <span class="label">Приложения</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="menu-group">
+                <div class="menu-group-label">Питание</div>
+                <div class="menu-list">
+                    <div class="menu-item warning" onclick="sendCmdWithConfirm('sleep', 'Перевести ПК в спящий режим?')">
+                        <span class="icon"><i class="ph-light ph-moon"></i></span>
+                        <span class="label">Сон</span>
+                    </div>
+                    <div class="menu-item danger" onclick="sendCmdWithConfirm('shutdown', 'Выключить ПК?')">
+                        <span class="icon"><i class="ph-light ph-power"></i></span>
+                        <span class="label">Выключить</span>
+                    </div>
+                    <div class="menu-item warning" onclick="sendCmdWithConfirm('reboot', 'Перезагрузить ПК?')">
+                        <span class="icon"><i class="ph-light ph-arrows-clockwise"></i></span>
+                        <span class="label">Перезагрузить</span>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <!-- Power Action Buttons -->
-        <div class="action-row power-row">
-            <div class="action-btn power-btn sleep-btn" onclick="sendApiWithConfirm('sleep', 'Перевести компьютер в спящий режим?')">
-                <i class="ph-light ph-moon"></i> SLEEP
-            </div>
-            <div class="action-btn power-btn shutdown-btn" onclick="sendApiWithConfirm('shutdown', 'Выключить компьютер?')">
-                <i class="ph-light ph-power"></i> SHUTDOWN
-            </div>
-            <div class="action-btn power-btn reboot-btn" onclick="sendApiWithConfirm('reboot', 'Перезагрузить компьютер?')">
-                <i class="ph-light ph-arrow-clockwise"></i> REBOOT
-            </div>
+
+    </main>
+</div>
+
+<!-- ===== APPS PAGE  ===== -->
+<div id="appsPage">
+    <div class="apps-page-header">
+        <button class="apps-page-back" onclick="closeAppsPage()">
+            <i class="ph-light ph-arrow-left"></i>
+        </button>
+        <div class="apps-page-title">Приложения</div>
+        <button class="header-btn small" onclick="loadAppsPage()" title="Обновить">
+            <i class="ph-light ph-arrows-clockwise"></i>
+        </button>
+    </div>
+
+    <div class="apps-page-search">
+        <i class="ph-light ph-magnifying-glass"></i>
+        <input type="text" id="appsPageSearch" placeholder="Поиск приложений..." oninput="filterAppsPage()" />
+    </div>
+
+    <div class="apps-page-grid" id="appsPageGrid">
+        <div class="apps-loading">
+            <i class="ph-light ph-spinner"></i> Загрузка...
         </div>
-                
-        <!-- Browser URL Input -->
-        <div class="browser-section">
-            <div class="apps-title"><i class="ph-light ph-browser"></i> OPEN IN BROWSER</div>
-            <div class="browser-row">
-                <input type="text" id="urlInput" class="url-input" placeholder="Search or enter URL...">
-                <button class="browser-btn" onclick="openBrowser()">GO</button>
+    </div>
+
+    <button class="apps-page-folder-btn" onclick="sendCmd('open_apps_folder')">
+        <i class="ph-light ph-folder-open"></i> Открыть папку NeoShellApps
+    </button>
+</div>
+
+<!-- ===== SETTINGS ===== -->
+<div id="settingsPage">
+    <button class="settings-back" onclick="toggleSettings()">
+        <i class="ph-light ph-arrow-left"></i>
+    </button>
+    <div class="settings-title">Настройки</div>
+
+    <div class="settings-group">
+        <div class="settings-group-label">Подтверждения</div>
+        <div class="settings-item">
+            <div>
+                <div class="label">Выключение</div>
+                <div class="desc">Спрашивать перед выключением</div>
             </div>
+            <label class="toggle">
+                <input type="checkbox" id="confirmShutdown" checked />
+                <span class="slider"></span>
+            </label>
         </div>
-        
-        <!-- Applications -->
-        <div class="apps-section">
-            <div class="apps-title"><i class="ph-light ph-grid-four"></i> APPLICATIONS</div>
-            <div id="appsGrid" class="apps-grid">
-                <div style="text-align:center; grid-column:1/-1; color:#ffcc00;">Loading...</div>
+        <div class="settings-item">
+            <div>
+                <div class="label">Перезагрузка</div>
+                <div class="desc">Спрашивать перед перезагрузкой</div>
             </div>
+            <label class="toggle">
+                <input type="checkbox" id="confirmRestart" checked />
+                <span class="slider"></span>
+            </label>
         </div>
-        
-        <div id="installHint" class="hidden" style="text-align:center; margin-top:20px; font-size:12px; color:#888;">
-            <i class="ph-light ph-download-simple"></i> Add to Home Screen for easy access
+        <div class="settings-item">
+            <div>
+                <div class="label">Сон</div>
+                <div class="desc">Спрашивать перед сном</div>
+            </div>
+            <label class="toggle">
+                <input type="checkbox" id="confirmSleep" checked />
+                <span class="slider"></span>
+            </label>
+        </div>
+    </div>
+
+    <div class="settings-group">
+        <div class="settings-group-label">О программе</div>
+        <div class="settings-about">
+            <div>NeoShell v2.0</div>
+            <div class="link">github.com/rud1x/NeoShell</div>
+        </div>
+        <button class="settings-btn danger" onclick="logout()">
+            <i class="ph-light ph-sign-out"></i> Выйти
+        </button>
+    </div>
+</div>
+
+<!-- ===== BROWSER DIALOG ===== -->
+<div class="dialog-overlay" id="browserDialog">
+    <div class="dialog">
+        <div class="dialog-title">Открыть в браузере</div>
+        <div class="dialog-desc">Введите URL или поисковый запрос</div>
+        <input type="text" id="browserInput" class="dialog-input" placeholder="https://example.com или поиск..." autofocus />
+        <div class="dialog-actions">
+            <button class="dialog-btn secondary" onclick="closeBrowserDialog()">Отмена</button>
+            <button class="dialog-btn primary" onclick="submitBrowser()">Открыть</button>
         </div>
     </div>
 </div>
-<div id="toast" class="toast"></div>
 
-<script src="script.js"></script>
+<!-- ===== TOAST ===== -->
+<div id="toast"></div>
+
+<script src="app.js"></script>
 </body>
 </html>

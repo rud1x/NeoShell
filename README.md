@@ -1,88 +1,152 @@
-<p align="center">
-  <img src="https://i.ibb.co/gL2pJL2m/image.png" alt="NeoShell Preview" width="800"/>
-</p>
+<div align="center">
 
-**Управляй своим ПК с телефона через Wi-Fi. Красивый веб-интерфейс, просто запусти exe — и готово.**
+  <img src="https://github.com/rud1x/NeoShell/blob/main/static/logo.png" width="120" alt="NeoShell Logo" style="border-radius: 18px;" />
 
-[![Stars](https://img.shields.io/github/stars/rud1x/NeoShell?style=for-the-badge&logo=github&color=yellow)](https://github.com/rud1x/NeoShell)
-[![Releases](https://img.shields.io/github/v/release/rud1x/NeoShell?style=for-the-badge&logo=github&color=orange)](https://github.com/rud1x/NeoShell/releases)
+  <h1 align="center" style="font-style: italic; color: #ffcc00;">NeoShell</h1>
 
----
+  <p align="center">
+    <strong>Remote PC control from your phone — no installation, just a browser</strong>
+  </p>
 
-## ✨ Возможности
+  <p align="center">
+    <a href="README.ru.md"><strong>🇷🇺 Читать на русском</strong></a>
+  </p>
 
-- 🔒 **LOCK** — Блокировка ПК одной кнопкой
-- 💤 **SLEEP** — Быстрый сон компьютера
-- 🔄 **SHUTDOWN / REBOOT** — Выключение и перезагрузка
-- 🖥️ **MINIMIZE ALL** — Свернуть все окна
-- 📊 **TASK MANAGER** — Открыть диспетчер задач
-- ❌ **CLOSE APP** — Закрыть активное окно (Alt+F4)
-- 🌐 **OPEN IN BROWSER** — Открыть ссылку или поиск в Google
-- 📦 **APPS** — Запуск приложений из папки `NeoShellApps`
-- 📡 **PING** — Статус ПК в реальном времени
-- 🔐 **SECURITY** — Защита секретным ключом
-- 📱 **PWA** — Установка на телефон как приложение
-- 🖼️ **TRAY** — Работа в фоне, иконка меняет цвет
-- ⚡ **AUTOSTART** — Автоматический запуск с Windows
+  <img src="https://readme-typing-svg.demolab.com?font=JetBrains+Mono&weight=600&size=20&duration=3000&pause=1000&color=FFCC00&center=true&vCenter=true&width=550&lines=Windows+Remote+Control;Lock+%2B+Shutdown+%2B+Restart+%2B+Sleep;Launch+Apps+from+Phone;PWA+%2B+Mobile-Friendly+UI" alt="Typing SVG" />
 
----
+  <br>
 
-## 🚀 Быстрая установка
+  <a href="https://github.com/rud1x/NeoShell/releases/latest">
+    <img src="https://img.shields.io/badge/Release-v2.0-ffcc00?style=for-the-badge&logo=github&logoColor=white" alt="Release"/>
+  </a>
+  <a href="https://t.me/therudix">
+    <img src="https://img.shields.io/badge/Telegram-Contact-26A5E4?style=for-the-badge&logo=telegram&logoColor=white" alt="Telegram"/>
+  </a>
+  <a href="https://github.com/rud1x/NeoShell">
+    <img src="https://img.shields.io/github/stars/rud1x/NeoShell?style=for-the-badge&color=ffcc00&logo=github" alt="Stars"/>
+  </a>
 
-### На ПК (Windows)
+</div>
 
-1. Скачай `NeoShell_v2.0.zip` из [Releases](https://github.com/rud1x/NeoShell/releases)
-2. Запусти `NeoShell.exe`
-3. Нажми `START SERVER`
-4. Отсканируй QR код телефоном
 
----
+### <img src="https://api.iconify.design/ph:sparkle-duotone.svg?color=%23ffcc00" width="22" align="top"> Why I built NeoShell
 
-## 📱 Подключение с телефона
+I built NeoShell because getting up from the couch to shut down my PC or turn off the monitor light at 2 AM is not my idea of a good time :)
 
-1. Убедись, что телефон в той же Wi-Fi сети, что и ПК
-2. Открой приложение NeoShell на ПК
-3. Нажми `START SERVER`
-4. Нажми `CONNECT`
-5. Отсканируй QR код телефоном
-6. Или вручную введи URL в браузере: `http://IP_компьютера:8000`
+When you're working in another room or already in bed, standard remote desktop tools are overkill. They require installation, complex setup, and constant internet connection.
 
----
+**NeoShell** turns your phone into a full-featured remote control for your Windows PC. Open the browser, scan the QR code, and you're ready to go. No phone installation, no cloud dependencies, just your local Wi-Fi.
 
-## 📂 Добавление приложений
+<br>
 
-1. Открой папку `NeoShellApps` (она создается рядом с программой)
-2. Перетащи туда ярлыки программ (`.lnk`) или ссылки (`.url`)
-3. Обнови страницу в NeoShell — приложения появятся!
+### <img src="https://api.iconify.design/ph:table-duotone.svg?color=%23ffcc00" width="22" align="top"> Supported Commands
 
----
+| Command | Description |
+| :--- | :--- |
+| **Lock** | Lock the PC screen instantly |
+| **Explorer** | Open File Explorer on the PC |
+| **Minimize All** | Minimize all open windows |
+| **Task Manager** | Open Windows Task Manager |
+| **Close App** | Close the active application |
+| **Sleep** | Put the PC to sleep mode |
+| **Shutdown** | Shut down the PC (with confirmation) |
+| **Reboot** | Restart the PC (with confirmation) |
+| **Apps** | Launch any app from the `NeoShellApps` folder |
+| **Browser** | Open any URL or search query on the PC |
 
-## ⚙️ Настройки
+<br>
 
-В приложении доступны:
+### <img src="https://api.iconify.design/ph:lightning-duotone.svg?color=%23ffcc00" width="22" align="top"> Key Features
 
-- **Смена порта** (по умолчанию 8000)
-- **Смена секретного ключа**
-- **Изменение папки с приложениями**
-- **Автозагрузка с Windows**
-- **Автозапуск сервера при старте программы**
+* **Instant Remote Control**: Lock, shutdown, restart, sleep, and launch apps directly from your phone.
+* **No Phone Installation**: Just open the browser or install as PWA (Progressive Web App).
+* **QR Code Pairing**: Scan the QR code from the PC screen to connect instantly.
+* **Launch Any Application**: Drop `.exe`, `.lnk`, or `.url` files into `NeoShellApps` folder — they appear in the interface.
+* **Secure Access**: Built-in key-based authentication prevents unauthorized access.
+* **Mobile-First UI**: Clean, glass-morphism design optimized for smartphones.
+* **Smart Status Tracking**: Real-time connection status with PC name, IP, and ping.
+* **Works Offline**: Local Wi-Fi only — no internet required.
+* **Atomic File Saves**: Your data is safe even during power outages.
 
-Все настройки сохраняются в `.neoshell/config.json`
+<br>
 
----
+### <img src="https://api.iconify.design/ph:puzzle-piece-duotone.svg?color=%23ffcc00" width="22" align="top"> Architecture & Extensibility
 
-## 🖥️ Управление из трея
+NeoShell was designed to be simple yet extensible:
 
-- **Левый клик** по иконке — показать окно
-- **Правый клик** — меню (Show Window, Start Server, Stop Server, Exit)
+* **Python HTTP Server**: Lightweight Flask-like server handles all API requests.
+* **Static Web Interface**: HTML + CSS + JS — easy to customize and style.
+* **API-First Design**: Add new commands by extending the API endpoints.
+* **Open Source**: Modify, fork, and adapt to your needs.
 
-Иконка в трее:
-- 🟡 **Желтая** — сервер остановлен
-- 🟢 **Зеленая** — сервер запущен
+<br>
 
----
+### Adding a new command in 2 minutes:
 
-## Скриншоты
+In `NeoShell.py`, add a new route:
 
-![image](https://i.ibb.co/ymFMjdJw/Screenshot-20260503-002824-Chrome.jpg)
-![image](https://i.ibb.co/4HnrNKG/image.png)
+```python
+@app.route('/api/my_command', methods=['POST'])
+@require_key
+def api_my_command():
+    os.system('your_command_here')
+    return jsonify({'success': True})
+```
+
+Then add a button in the frontend (`index.html`):
+
+```html
+<div class="menu-item" onclick="sendCmd('my_command')">
+    <span class="icon"><i class="ph-light ph-my-icon"></i></span>
+    <span class="label">My Command</span>
+</div>
+```
+### <img src="https://api.iconify.design/ph:download-simple-duotone.svg?color=%23ffcc00" width="22" align="top"> Installation
+
+1. Download **`NeoShell.exe`** from the [Releases](https://github.com/rud1x/NeoShell/releases) page.
+2. Run the executable — it will minimize to the system tray.
+3. A QR code will appear on the screen. Scan it with your phone.
+4. Start controlling your PC from the browser!
+
+#### Build from Source:
+
+```bash
+# Clone repository
+git clone https://github.com/rud1x/NeoShell.git
+cd NeoShell
+
+# Install dependencies
+pip install pyinstaller pillow pyqt6 qrcode
+
+# Build executable
+pyinstaller --onefile --windowed --icon=neoshell.ico --add-data "static;static" --add-data "neoshell.ico;." --name NeoShell NeoShell.py
+```
+
+The built `NeoShell.exe` will be in the `dist/` folder.
+
+<br>
+
+### <img src="https://api.iconify.design/ph:code-duotone.svg?color=%23ffcc00" width="22" align="top"> Tech Stack
+
+<div align="left">
+  <a href="https://skillicons.dev">
+    <img src="https://skillicons.dev/icons?i=python,html,css,js,pyqt,git&theme=dark" alt="NeoShell Tech Stack" />
+  </a>
+</div>
+
+<br>
+
+### <img src="https://api.iconify.design/ph:heart-duotone.svg?color=%23ffcc00" width="22" align="top"> Contact & Support
+
+NeoShell is developed independently. If this tool saves you time, leaving a star ⭐️ on GitHub means a lot!
+
+<br>
+
+<div align="left">
+  <a href="https://t.me/therudix">
+    <img src="https://img.shields.io/badge/Telegram-therudix-26A5E4?style=for-the-badge&logo=telegram&logoColor=white" alt="Telegram"/>
+  </a>
+  <a href="https://github.com/rud1x">
+    <img src="https://img.shields.io/badge/GitHub-rud1x-181717?style=for-the-badge&logo=github&logoColor=white" alt="GitHub Profile"/>
+  </a>
+</div>

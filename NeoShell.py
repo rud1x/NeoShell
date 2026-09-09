@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 import sys
 import os
 import json
@@ -13,6 +12,10 @@ import ctypes
 from pathlib import Path
 from datetime import datetime
 from io import BytesIO
+import asyncio
+import winsdk.windows.media.control as wmc
+
+
 
 try:
     import win32event
@@ -24,6 +27,7 @@ try:
 except:
     pass
 
+
 from PyQt6.QtCore import (Qt, QTimer, QPoint, QUrl, pyqtSignal, QByteArray, 
                           QPropertyAnimation, QEasingCurve, QVariantAnimation)
 from PyQt6.QtGui import (QColor, QPainter, QPainterPath, QPen, QIcon, 
@@ -34,10 +38,14 @@ from PyQt6.QtWidgets import (QApplication, QWidget, QVBoxLayout, QHBoxLayout,
                              QCheckBox, QFileDialog)
 from PyQt6.QtSvgWidgets import QSvgWidget
 
+
 from http.server import HTTPServer, BaseHTTPRequestHandler
 
 import qrcode
 from PIL import Image, ImageDraw
+
+
+
 
 if getattr(sys, 'frozen', False):
     BASE_DIR = Path(sys.executable).parent
@@ -86,6 +94,9 @@ PORT = config["port"]
 APPS_DIR = Path(config["apps_path"])
 APPS_DIR.mkdir(parents=True, exist_ok=True)
 
+
+
+
 def recolor_icon(image_path, target_color):
     try:
         img = Image.open(image_path).convert("RGBA")
@@ -119,6 +130,9 @@ def get_default_icon():
     pixmap = QPixmap()
     pixmap.loadFromData(output.getvalue())
     return QIcon(pixmap)
+
+
+
 
 def kill_process_on_port(port):
     try:
@@ -181,12 +195,95 @@ def remove_from_startup():
     except:
         return False
 
+
+
+
+
+
+async def get_media_session():
+    """Получить текущую медиа-сессию"""
+    try:
+        session_manager = await wmc.GlobalSystemMediaTransportControlsSessionManager.request_async()
+        return session_manager.get_current_session()
+    except:
+        return None
+
+def run_async(coro):
+    """Запустить асинхронную функцию синхронно"""
+    try:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        return loop.run_until_complete(coro)
+    except:
+        return None
+
+def media_play_pause():
+    """Play/Pause"""
+    session = run_async(get_media_session())
+    if session:
+        run_async(session.try_toggle_play_pause_async())
+        return True
+    return False
+
+def media_next():
+    """Следующий трек"""
+    session = run_async(get_media_session())
+    if session:
+        run_async(session.try_skip_next_async())
+        return True
+    return False
+
+def media_prev():
+    """Предыдущий трек (двойное нажатие)"""
+    session = run_async(get_media_session())
+    if session:
+        run_async(session.try_skip_previous_async())
+        run_async(session.try_skip_previous_async())
+        return True
+    return False
+
+def media_stop():
+    """Остановить"""
+    session = run_async(get_media_session())
+    if session:
+        run_async(session.try_stop_async())
+        return True
+    return False
+
+def get_current_track():
+    """Получить информацию о текущем треке"""
+    session = run_async(get_media_session())
+    if not session:
+        return {"success": False, "error": "No active media session"}
+    
+    info = run_async(session.try_get_media_properties_async())
+    if not info:
+        return {"success": False, "error": "No track info"}
+    
+    playback_info = session.get_playback_info()
+    is_playing = False
+    if playback_info:
+        is_playing = (playback_info.playback_status.value == 4)
+    
+    return {
+        "success": True,
+        "title": info.title or "",
+        "artist": info.artist or "",
+        "album": info.album_title or "",
+        "is_playing": is_playing
+    }
+
+
+
+
+
 class NeoShellHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         parsed = urllib.parse.urlparse(self.path)
         path = parsed.path
         query = urllib.parse.parse_qs(parsed.query)
         
+
         if path == '/api/status':
             key = query.get('key', [''])[0]
             if key != SECRET_KEY:
@@ -199,6 +296,7 @@ class NeoShellHandler(BaseHTTPRequestHandler):
             self.wfile.write(json.dumps({"status": "online", "time": datetime.now().isoformat()}).encode())
             return
         
+
         if path == '/api/ping':
             key = query.get('key', [''])[0]
             if key != SECRET_KEY:
@@ -208,9 +306,28 @@ class NeoShellHandler(BaseHTTPRequestHandler):
             self.send_response(200)
             self.send_header('Content-type', 'application/json')
             self.end_headers()
-            self.wfile.write(json.dumps({"online": True, "ip": get_local_ip()}).encode())
+            self.wfile.write(json.dumps({
+                "online": True,
+                "ip": get_local_ip(),
+                "name": socket.gethostname()
+            }).encode())
             return
         
+
+        if path == '/api/media/now':
+            key = query.get('key', [''])[0]
+            if key != SECRET_KEY:
+                self.send_response(401)
+                self.end_headers()
+                return
+            track_info = get_current_track()
+            self.send_response(200)
+            self.send_header('Content-type', 'application/json')
+            self.end_headers()
+            self.wfile.write(json.dumps(track_info).encode())
+            return
+
+
         if path == '/api/apps':
             key = query.get('key', [''])[0]
             if key != SECRET_KEY:
@@ -231,6 +348,7 @@ class NeoShellHandler(BaseHTTPRequestHandler):
             self.wfile.write(json.dumps({"apps": sorted(apps, key=lambda x: x["name"]), "path": str(apps_path)}).encode())
             return
         
+
         if path == '/manifest.json':
             self.send_response(200)
             self.send_header('Content-type', 'application/json')
@@ -251,6 +369,7 @@ class NeoShellHandler(BaseHTTPRequestHandler):
             self.wfile.write(json.dumps(manifest).encode())
             return
         
+
         if path == '/' or path == '':
             path = '/index.html'
         
@@ -282,46 +401,47 @@ class NeoShellHandler(BaseHTTPRequestHandler):
         path = parsed.path
         query = urllib.parse.parse_qs(parsed.query)
         
+
         key = query.get('key', [''])[0]
         if key != SECRET_KEY:
             self.send_response(401)
             self.end_headers()
             return
         
-        # API lock
+
         if path == '/api/lock':
             run_cmd('rundll32.exe user32.dll,LockWorkStation')
         
-        # API sleep
+
         elif path == '/api/sleep':
             run_cmd('rundll32.exe powrprof.dll,SetSuspendState 0,1,0')
         
-        # API shutdown
+
         elif path == '/api/shutdown':
             run_cmd('shutdown /s /t 10')
         
-        # API reboot
+
         elif path == '/api/reboot':
             run_cmd('shutdown /r /t 10')
         
-        # API minimize_all
+
         elif path == '/api/minimize_all':
             run_cmd('powershell -c "(New-Object -ComObject Shell.Application).minimizeall()"')
         
-        # API task_manager
+
         elif path == '/api/task_manager':
             run_cmd('start taskmgr')
         
-        # API close_app
+
         elif path == '/api/close_app':
             run_cmd('powershell -c "(New-Object -ComObject WScript.Shell).SendKeys(\'%{F4}\')"')
 
-        # Open File Explorer
+
         elif path == '/api/explorer':
             run_cmd('explorer')
             response = {"success": True}
 
-        # Open browser
+
         elif path == '/api/open_browser':
             query_str = urllib.parse.unquote(query.get('query', [''])[0]) if query.get('query') else ''
             if query_str:
@@ -334,7 +454,28 @@ class NeoShellHandler(BaseHTTPRequestHandler):
             else:
                 response = {"success": False, "error": "No query provided"}
 
-        # Run app
+
+        elif path == '/api/media/playpause':
+            success = media_play_pause()
+            response = {"success": success}
+        
+        elif path == '/api/media/next':
+            success = media_next()
+            response = {"success": success}
+        
+        elif path == '/api/media/prev':
+            success = media_prev()
+            response = {"success": success}
+        
+        elif path == '/api/media/stop':
+            success = media_stop()
+            response = {"success": success}
+        
+        elif path == '/api/media/now':
+            track_info = get_current_track()
+            response = track_info
+
+
         elif path.startswith('/api/run/'):
             filename = urllib.parse.unquote(path.split('/')[-1])
             file_path = APPS_DIR / filename
@@ -344,7 +485,7 @@ class NeoShellHandler(BaseHTTPRequestHandler):
                 os.startfile(str(file_path))
                 response = {"success": True}
 
-        # Open apps folder
+
         elif path == '/api/open_apps_folder':
             key = query.get('key', [''])[0]
             if key != SECRET_KEY:
@@ -357,7 +498,7 @@ class NeoShellHandler(BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(json.dumps({"success": True}).encode())
             return
-                # Unknown endpoint
+
         else:
             self.send_response(404)
             self.end_headers()
@@ -370,6 +511,9 @@ class NeoShellHandler(BaseHTTPRequestHandler):
     
     def log_message(self, format, *args):
         pass
+
+
+
 
 server = None
 server_thread = None
@@ -395,10 +539,13 @@ def stop_server():
     server_running = False
     kill_process_on_port(PORT)
 
+
+
+
 class AnimatedLogo(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setFixedSize(120, 120)  
+        self.setFixedSize(120, 120)  # Увеличенный размер
         self.is_running = False
         self.animation_value = 0
         self.setup_animation()
@@ -430,14 +577,17 @@ class AnimatedLogo(QWidget):
         p = QPainter(self)
         p.setRenderHint(QPainter.RenderHint.Antialiasing)
         
+
         center_x = self.width() // 2
         center_y = self.height() // 2
         logo_size = 90
         
+
         if self.is_running:
             glow_intensity = 30 + int(70 * self.animation_value)
             glow_color = QColor(16, 185, 129, glow_intensity)
             
+
             for i in range(4):
                 offset = (i + 1) * 4
                 alpha = max(0, 40 - i * 10)
@@ -445,36 +595,46 @@ class AnimatedLogo(QWidget):
                 p.setBrush(QColor(16, 185, 129, alpha))
                 p.drawRoundedRect(offset, offset, self.width() - offset * 2, self.height() - offset * 2, 30, 30)
         
+
         if self.is_running:
-            target_color = QColor(16, 185, 129) 
+
+            target_color = QColor(16, 185, 129)  # Зеленый
             if self.animation_value > 0:
+
                 intensity = 100 + int(100 * self.animation_value)
                 logo_color = QColor(16, 185, 129, intensity)
             else:
                 logo_color = QColor(16, 185, 129)
         else:
-            logo_color = QColor(255, 204, 0)
+            logo_color = QColor(255, 204, 0)  # Желтый
         
+
         rect = self.rect().adjusted(15, 15, -15, -15)
         
         if LOGO_PATH.exists():
+
             pixmap = QPixmap(str(LOGO_PATH))
             if not pixmap.isNull():
+
                 scaled = pixmap.scaled(logo_size, logo_size, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
                 
+
                 p.save()
                 p.setCompositionMode(QPainter.CompositionMode.CompositionMode_SourceOver)
                 p.drawPixmap((self.width() - scaled.width()) // 2, 
                             (self.height() - scaled.height()) // 2, scaled)
                 p.restore()
             else:
+
                 p.setPen(QPen(logo_color, 3))
                 p.setFont(self.font())
                 p.drawText(rect, Qt.AlignmentFlag.AlignCenter, "N")
         else:
+
             p.setPen(QPen(logo_color, 4, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap, Qt.PenJoinStyle.RoundJoin))
             p.setBrush(Qt.BrushStyle.NoBrush)
             
+
             n_rect = rect.adjusted(15, 10, -15, -10)
             p.drawLine(n_rect.left(), n_rect.bottom(), n_rect.left(), n_rect.top())
             p.drawLine(n_rect.left(), n_rect.top(), n_rect.right(), n_rect.bottom())
@@ -482,6 +642,9 @@ class AnimatedLogo(QWidget):
     
     def mousePressEvent(self, event):
         pass
+
+
+
 
 class BackButton(QPushButton):
     clicked = pyqtSignal()
@@ -508,6 +671,9 @@ class BackButton(QPushButton):
     def mouseReleaseEvent(self, e):
         if e.button() == Qt.MouseButton.LeftButton:
             self.clicked.emit()
+
+
+
 
 def ensure_static_files():
     index_path = STATIC_DIR / "index.html"
@@ -539,6 +705,9 @@ check();setInterval(check,5000);
 </html>"""
         index_path.write_text(html_content, encoding='utf-8')
 
+
+
+
 class NeoShell(QWidget):
     def __init__(self):
         super().__init__()
@@ -547,6 +716,7 @@ class NeoShell(QWidget):
                 ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("NeoShell.Control.1.0")
             except:
                 pass
+
 
         icon_path = BASE_DIR / "neoshell.ico"
         if icon_path.exists():
@@ -666,9 +836,11 @@ class NeoShell(QWidget):
         
         layout.addStretch()
         
+
         self.logo = AnimatedLogo()
         layout.addWidget(self.logo, alignment=Qt.AlignmentFlag.AlignCenter)
         
+
         self.status_label = QLabel("SERVER STOPPED")
         self.status_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.status_label.setStyleSheet("color: #ff4444; font-size: 14px; font-weight: 700; margin-top: 15px; background: transparent;")
@@ -676,11 +848,13 @@ class NeoShell(QWidget):
         
         layout.addStretch()
         
+
         self.buttons_container = QWidget()
         buttons_layout = QVBoxLayout(self.buttons_container)
         buttons_layout.setContentsMargins(25, 0, 25, 30)
         buttons_layout.setSpacing(12)
         
+
         self.main_btn = QPushButton("START SERVER")
         self.main_btn.setFixedSize(310, 55)
         self.main_btn.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -701,6 +875,7 @@ class NeoShell(QWidget):
         """)
         buttons_layout.addWidget(self.main_btn, alignment=Qt.AlignmentFlag.AlignCenter)
         
+
         self.connect_btn = QPushButton("🌐 CONNECT")
         self.connect_btn.setFixedSize(310, 55)
         self.connect_btn.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -722,6 +897,7 @@ class NeoShell(QWidget):
         self.connect_btn.setVisible(False)
         buttons_layout.addWidget(self.connect_btn)
         
+
         settings_btn = QPushButton("⚙️ SETTINGS")
         settings_btn.setFixedSize(310, 55)
         settings_btn.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -1180,6 +1356,9 @@ class NeoShell(QWidget):
     def closeEvent(self, e):
         e.ignore()
         self.hide()
+
+
+
 
 def main():
     os.environ["QT_ENABLE_HIGHDPI_SCALING"] = "1"
