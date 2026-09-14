@@ -1,0 +1,12 @@
+{
+  "appId": "com.rud1x.neoshell",
+  "appName": "NeoShell",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "http",
+    "cleartext": true
+  },
+  "android": {
+    "allowMixedContent": true
+  }
+}

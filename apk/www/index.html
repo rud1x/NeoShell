@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="theme-color" content="#0A0A0C" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <link rel="manifest" href="manifest.json" />
+    <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/light/style.css" />
+    <link rel="stylesheet" href="style.css" />
+    <title>NeoShell</title>
+</head>
+<body>
+
+
+<div id="splash">
+    <img src="logo.png" class="splash-logo-img" alt="NeoShell" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" />
+    <div class="splash-logo" style="display:none;">N</div>
+    <div class="splash-title">NeoShell</div>
+    <div class="splash-sub">Управление ПК с телефона</div>
+    <div class="splash-loader"><span></span><span></span><span></span></div>
+</div>
+
+
+<div id="app">
+    <header class="header">
+        <button class="header-btn" onclick="toggleDrawer()">
+            <i class="ph-light ph-list"></i>
+        </button>
+        <div class="header-logo">NeoShell</div>
+        <div class="header-actions">
+            <button class="header-btn update-btn" id="updateBtn" onclick="showUpdateDialog()" style="display:none;">
+                <i class="ph-light ph-arrow-circle-up"></i>
+            </button>
+            <button class="header-btn" onclick="refreshAll()">
+                <i class="ph-light ph-arrows-clockwise"></i>
+            </button>
+        </div>
+    </header>
+
+    <div class="device-list" id="deviceList"></div>
+
+    <button class="fab-add" onclick="openAddMenu()">
+        <i class="ph-light ph-plus"></i>
+    </button>
+</div>
+
+
+<div class="drawer-overlay" id="drawerOverlay" onclick="toggleDrawer()"></div>
+<div class="drawer" id="drawer">
+    <div class="drawer-header">
+        <div class="drawer-logo">NeoShell</div>
+        <div class="drawer-sub">Версия <span class="app-version">2.2</span></div>
+    </div>
+    <div class="drawer-menu">
+        <div class="drawer-item" onclick="toggleDrawer();openSettings()">
+            <i class="ph-light ph-gear"></i> Настройки
+        </div>
+        <div class="drawer-item" onclick="toggleDrawer();openAbout()">
+            <i class="ph-light ph-info"></i> О программе
+        </div>
+        <div class="drawer-item" onclick="toggleDrawer();checkUpdatesManual()">
+            <i class="ph-light ph-arrow-circle-up"></i> Проверить обновления
+        </div>
+    </div>
+</div>
+
+
+<div class="sheet-overlay" id="addMenuOverlay" onclick="closeAddMenu()">
+    <div class="sheet add-menu-sheet" onclick="event.stopPropagation()">
+        <div class="sheet-handle"></div>
+        <div class="add-menu-title">Добавить ПК</div>
+        <div class="add-menu-options">
+            <div class="add-menu-option" onclick="closeAddMenu();scanQR()">
+                <div class="add-menu-icon"><i class="ph-light ph-qr-code"></i></div>
+                <div class="add-menu-text">
+                    <div class="add-menu-name">Сканировать QR</div>
+                    <div class="add-menu-desc">Наведите камеру на QR-код в окне NeoShell</div>
+                </div>
+                <i class="ph-light ph-caret-right add-menu-arrow"></i>
+            </div>
+            <div class="add-menu-option" onclick="closeAddMenu();openAddDialog()">
+                <div class="add-menu-icon"><i class="ph-light ph-pencil-simple"></i></div>
+                <div class="add-menu-text">
+                    <div class="add-menu-name">Ввести вручную</div>
+                    <div class="add-menu-desc">IP-адрес, порт и ключ доступа</div>
+                </div>
+                <i class="ph-light ph-caret-right add-menu-arrow"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="sheet-overlay" id="sheetOverlay" onclick="closeActions()">
+    <div class="sheet" onclick="event.stopPropagation()">
+        <div class="sheet-handle"></div>
+        <div class="sheet-header">
+            <div>
+                <div class="sheet-name" id="sheetName">ПК</div>
+                <div class="sheet-ip" id="sheetIp">IP:port</div>
+            </div>
+            <button class="header-btn" onclick="closeActions()">
+                <i class="ph-light ph-x"></i>
+            </button>
+        </div>
+
+        <div class="cmd-grid">
+            <div class="cmd-btn" onclick="sendCmd('explorer')">
+                <span class="icon"><i class="ph-light ph-folder-open"></i></span>
+                <span class="label">Проводник</span>
+            </div>
+            <div class="cmd-btn" onclick="sendCmd('minimize_all')">
+                <span class="icon"><i class="ph-light ph-desktop"></i></span>
+                <span class="label">Свернуть</span>
+            </div>
+            <div class="cmd-btn" onclick="sendCmd('task_manager')">
+                <span class="icon"><i class="ph-light ph-chart-line"></i></span>
+                <span class="label">Диспетчер</span>
+            </div>
+            <div class="cmd-btn" onclick="sendCmd('close_app')">
+                <span class="icon"><i class="ph-light ph-x-circle"></i></span>
+                <span class="label">Закрыть</span>
+            </div>
+            <div class="cmd-btn" onclick="openBrowserDialog()">
+                <span class="icon"><i class="ph-light ph-browser"></i></span>
+                <span class="label">Браузер</span>
+            </div>
+            <div class="cmd-btn" onclick="openAppsPage()">
+                <span class="icon"><i class="ph-light ph-grid-four"></i></span>
+                <span class="label">Приложения</span>
+            </div>
+        </div>
+
+        <div class="power-row">
+            <div class="power-btn" onclick="sendCmdWithConfirm('sleep', 'Перевести в сон?')">
+                <i class="ph-light ph-moon"></i>
+                <span>Сон</span>
+            </div>
+            <div class="power-btn" onclick="sendCmdWithConfirm('lock', 'Заблокировать ПК?')">
+                <i class="ph-light ph-lock-simple"></i>
+                <span>Блок</span>
+            </div>
+            <div class="power-btn warn" onclick="sendCmdWithConfirm('reboot', 'Перезагрузить?')">
+                <i class="ph-light ph-arrows-clockwise"></i>
+                <span>Рестарт</span>
+            </div>
+            <div class="power-btn danger" onclick="sendCmdWithConfirm('shutdown', 'Выключить?')">
+                <i class="ph-light ph-power"></i>
+                <span>Выкл</span>
+            </div>
+        </div>
+
+        <div class="sheet-actions">
+            <button class="sheet-btn" onclick="openEditDialog()">
+                <i class="ph-light ph-pencil"></i> Редактировать
+            </button>
+            <button class="sheet-btn danger" onclick="unpairDevice()">
+                <i class="ph-light ph-trash"></i> Разорвать
+            </button>
+        </div>
+    </div>
+</div>
+
+
+<div id="appsPage">
+    <div class="apps-header">
+        <button class="header-btn" onclick="closeAppsPage()">
+            <i class="ph-light ph-arrow-left"></i>
+        </button>
+        <div class="apps-title">Приложения</div>
+        <button class="header-btn" onclick="loadAppsPage()">
+            <i class="ph-light ph-arrows-clockwise"></i>
+        </button>
+    </div>
+    <div class="apps-search">
+        <i class="ph-light ph-magnifying-glass"></i>
+        <input type="text" id="appsSearch" placeholder="Поиск..." oninput="filterAppsPage()" />
+    </div>
+    <div class="apps-grid" id="appsGrid"></div>
+</div>
+
+
+<div id="settingsPage">
+    <div class="page-header">
+        <button class="header-btn" onclick="closeSettings()">
+            <i class="ph-light ph-arrow-left"></i>
+        </button>
+        <div class="page-title">Настройки</div>
+        <div style="width:40px;"></div>
+    </div>
+
+    <div class="settings-group">
+        <div class="settings-group-label">Подтверждения</div>
+        <div class="settings-item">
+            <div class="label">Выключение</div>
+            <label class="toggle"><input type="checkbox" id="confirmShutdown" checked><span class="slider"></span></label>
+        </div>
+        <div class="settings-item">
+            <div class="label">Перезагрузка</div>
+            <label class="toggle"><input type="checkbox" id="confirmRestart" checked><span class="slider"></span></label>
+        </div>
+        <div class="settings-item">
+            <div class="label">Сон</div>
+            <label class="toggle"><input type="checkbox" id="confirmSleep" checked><span class="slider"></span></label>
+        </div>
+        <div class="settings-item">
+            <div class="label">Блокировка</div>
+            <label class="toggle"><input type="checkbox" id="confirmLock" checked><span class="slider"></span></label>
+        </div>
+    </div>
+    <div class="settings-group">
+        <div class="settings-group-label">Уведомления</div>
+        <div class="settings-item">
+            <div class="label">Показывать статус ПК</div>
+            <label class="toggle"><input type="checkbox" id="notificationsEnabled" checked><span class="slider"></span></label>
+        </div>
+    </div>
+
+    <div class="settings-group">
+        <button class="settings-btn danger" onclick="logout()">
+            <i class="ph-light ph-trash"></i> Очистить все устройства
+        </button>
+    </div>
+</div>
+
+
+<div id="aboutPage">
+    <div class="page-header">
+        <button class="header-btn" onclick="closeAbout()">
+            <i class="ph-light ph-arrow-left"></i>
+        </button>
+        <div class="page-title">О программе</div>
+        <div style="width:40px;"></div>
+    </div>
+
+    <div class="about-hero">
+        <div class="about-logo-wrap">
+            <img src="logo.png" alt="NeoShell" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" />
+            <span class="about-logo-fallback" style="display:none;">N</span>
+        </div>
+        <div class="about-name">NeoShell</div>
+        <div class="about-version">Версия <span class="app-version">2.2</span></div>
+    </div>
+
+    <div class="about-section">
+        <div class="about-section-title">Статистика GitHub</div>
+        <div class="about-stats">
+            <div class="about-stat">
+                <i class="ph-light ph-star"></i>
+                <div class="about-stat-value" id="ghStars">—</div>
+                <div class="about-stat-label">Звёзд</div>
+            </div>
+            <div class="about-stat">
+                <i class="ph-light ph-git-fork"></i>
+                <div class="about-stat-value" id="ghForks">—</div>
+                <div class="about-stat-label">Форков</div>
+            </div>
+            <div class="about-stat">
+                <i class="ph-light ph-eye"></i>
+                <div class="about-stat-value" id="ghWatchers">—</div>
+                <div class="about-stat-label">Наблюдателей</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="about-section">
+        <div class="about-section-title">О разработчике</div>
+        <div class="about-card">
+            <div class="about-dev">
+                <i class="ph-light ph-user-circle"></i>
+                <div>
+                    <div class="about-dev-name">rud1x</div>
+                    <div class="about-dev-link">github.com/rud1x</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="about-section">
+        <div class="about-section-title">О программе</div>
+        <div class="about-card">
+            <div class="about-desc">
+                NeoShell — лёгкий клиент для управления Windows-ПК с телефона.
+                Работает в локальной Wi-Fi сети без облачных сервисов.
+            </div>
+        </div>
+    </div>
+
+    <div class="about-section">
+        <button class="settings-btn" onclick="openGitHub()">
+            <i class="ph-light ph-github-logo"></i> Открыть на GitHub
+        </button>
+    </div>
+</div>
+
+
+<div class="dialog-overlay" id="updateDialog">
+    <div class="dialog">
+        <div class="dialog-title">Доступно обновление</div>
+        <div class="dialog-desc" id="updateDesc">На GitHub вышла новая версия NeoShell</div>
+        <div class="dialog-actions">
+            <button class="dialog-btn secondary" onclick="closeUpdateDialog()">Позже</button>
+            <button class="dialog-btn primary" onclick="openReleasePage()">Открыть</button>
+        </div>
+    </div>
+</div>
+
+
+<div class="dialog-overlay" id="addDeviceDialog">
+    <div class="dialog">
+        <div class="dialog-title">Добавить ПК</div>
+        <div class="dialog-desc">Данные из окна NeoShell на компьютере</div>
+        <div class="dialog-field">
+            <label>Имя (необязательно)</label>
+            <input type="text" id="addName" placeholder="Мой ПК" />
+        </div>
+        <div class="dialog-field">
+            <label>IP-адрес</label>
+            <input type="text" id="addIp" placeholder="192.168.1.9" />
+        </div>
+        <div class="dialog-field">
+            <label>Порт</label>
+            <input type="number" id="addPort" value="8000" />
+        </div>
+        <div class="dialog-field">
+            <label>Ключ доступа</label>
+            <input type="text" id="addKey" placeholder="Ваш ключ" />
+        </div>
+        <div class="dialog-actions">
+            <button class="dialog-btn secondary" onclick="closeAddDialog()">Отмена</button>
+            <button class="dialog-btn primary" onclick="submitAddDevice()">Добавить</button>
+        </div>
+    </div>
+</div>
+
+
+<div class="dialog-overlay" id="editDialog">
+    <div class="dialog">
+        <div class="dialog-title">Редактировать ПК</div>
+        <div class="dialog-field">
+            <label>Имя</label>
+            <input type="text" id="editName" />
+        </div>
+        <div class="dialog-field">
+            <label>IP-адрес</label>
+            <input type="text" id="editIp" />
+        </div>
+        <div class="dialog-field">
+            <label>Порт</label>
+            <input type="number" id="editPort" />
+        </div>
+        <div class="dialog-field">
+            <label>Ключ</label>
+            <input type="text" id="editKey" />
+        </div>
+        <div class="dialog-actions">
+            <button class="dialog-btn secondary" onclick="closeEditDialog()">Отмена</button>
+            <button class="dialog-btn primary" onclick="saveEdit()">Сохранить</button>
+        </div>
+    </div>
+</div>
+
+
+<div class="dialog-overlay" id="browserDialog">
+    <div class="dialog">
+        <div class="dialog-title">Открыть в браузере</div>
+        <div class="dialog-desc">Введите URL или поисковый запрос</div>
+        <div class="dialog-field">
+            <input type="text" id="browserInput" placeholder="https://example.com или поиск" />
+        </div>
+        <div class="dialog-actions">
+            <button class="dialog-btn secondary" onclick="closeBrowserDialog()">Отмена</button>
+            <button class="dialog-btn primary" onclick="submitBrowserDialog()">Открыть</button>
+        </div>
+    </div>
+</div>
+
+
+<div class="dialog-overlay" id="confirmDialog">
+    <div class="dialog dialog-confirm">
+        <div class="confirm-icon">
+            <i class="ph-light ph-warning-circle"></i>
+        </div>
+        <div class="dialog-title" id="confirmTitle">Подтверждение</div>
+        <div class="dialog-desc" id="confirmDesc">Вы уверены?</div>
+        <div class="dialog-actions">
+            <button class="dialog-btn secondary" onclick="closeConfirm(false)">Отмена</button>
+            <button class="dialog-btn danger" onclick="closeConfirm(true)" id="confirmYesBtn">Да</button>
+        </div>
+    </div>
+</div>
+
+<div id="toast"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
