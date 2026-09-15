@@ -18,12 +18,16 @@ from io import BytesIO
 import asyncio
 import winsdk.windows.media.control as wmc
 
+from pycaw.pycaw import AudioUtilities, IAudioEndpointVolume
+from comtypes import CLSCTX_ALL
+from ctypes import cast, POINTER
+import psutil
 
 
 try:
     kernel32 = ctypes.windll.kernel32
     mutex = kernel32.CreateMutexW(None, False, "NeoShell_SingleInstance_Mutex")
-    if kernel32.GetLastError() == 183:  # ERROR_ALREADY_EXISTS
+    if kernel32.GetLastError() == 183:
         sys.exit(0)
 except:
     pass
@@ -64,8 +68,7 @@ LOGO_PATH = STATIC_DIR / "logo.png"
 ICON_PATH = STATIC_DIR / "icon.png"
 
 
-
-CURRENT_VERSION = '2.2'
+CURRENT_VERSION = '2.3'
 GITHUB_REPO = 'rud1x/NeoShell'
 GITHUB_API = f'https://api.github.com/repos/{GITHUB_REPO}/releases/latest'
 GITHUB_RELEASES = f'https://github.com/{GITHUB_REPO}/releases/latest'
@@ -119,7 +122,6 @@ def compare_versions(a, b):
 
 
 def check_for_updates():
-    
     try:
         req = urllib.request.Request(GITHUB_API, headers={'User-Agent': 'NeoShell'})
         with urllib.request.urlopen(req, timeout=6) as response:
@@ -129,13 +131,94 @@ def check_for_updates():
         if not latest:
             return
 
-
         if compare_versions(latest, CURRENT_VERSION) > 0:
-            time.sleep(3)  # ждём, пока окно появится
+            time.sleep(3)
             webbrowser.open(GITHUB_RELEASES)
 
     except Exception as e:
         print(f"Update check failed: {e}")
+
+
+def _get_volume_interface():
+    from pycaw.pycaw import AudioUtilities, IAudioEndpointVolume
+    from comtypes import CLSCTX_ALL
+    from ctypes import cast, POINTER
+    
+    devices = AudioUtilities.GetSpeakers()
+
+    if hasattr(devices, 'EndpointVolume'):
+        return devices.EndpointVolume
+
+    interface = devices.Activate(IAudioEndpointVolume._iid_, CLSCTX_ALL, None)
+    return cast(interface, POINTER(IAudioEndpointVolume))
+
+
+def get_volume():
+    try:
+        volume = _get_volume_interface()
+        return {
+            "success": True,
+            "level": int(volume.GetMasterVolumeLevelScalar() * 100),
+            "muted": bool(volume.GetMute())
+        }
+    except Exception as e:
+        return {"success": False, "error": str(e), "level": 0, "muted": False}
+
+
+def set_volume(level):
+    try:
+        level = max(0, min(100, int(level)))
+        volume = _get_volume_interface()
+        volume.SetMasterVolumeLevelScalar(level / 100.0, None)
+        if volume.GetMute():
+            volume.SetMute(0, None)
+        return {"success": True, "level": level}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+def toggle_mute():
+    try:
+        volume = _get_volume_interface()
+        current = volume.GetMute()
+        volume.SetMute(not current, None)
+        return {"success": True, "muted": bool(not current)}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+
+
+def get_cpu_temp():
+    try:
+        import wmi
+        w = wmi.WMI(namespace="root\\OpenHardwareMonitor")
+        sensors = w.Sensor()
+        for sensor in sensors:
+            if sensor.SensorType == 'Temperature' and 'CPU' in sensor.Name:
+                return int(sensor.Value)
+    except:
+        pass
+    return None
+
+
+def get_monitor_data():
+    try:
+        cpu = psutil.cpu_percent(interval=0.1)
+        ram = psutil.virtual_memory().percent
+        disk = psutil.disk_usage('C:\\').percent
+        temp = get_cpu_temp()
+
+        return {
+            "success": True,
+            "cpu": round(cpu, 1),
+            "ram": round(ram, 1),
+            "disk": round(disk, 1),
+            "temp": temp
+        }
+    except Exception as e:
+        return {"success": False, "error": str(e), "cpu": 0, "ram": 0, "disk": 0, "temp": None}
+
 
 
 def recolor_icon(image_path, target_color):
@@ -376,6 +459,32 @@ class NeoShellHandler(BaseHTTPRequestHandler):
             self.wfile.write(json.dumps(track_info).encode())
             return
 
+        if path == '/api/volume/get':
+            key = query.get('key', [''])[0]
+            if key != SECRET_KEY:
+                self.send_response(401)
+                self.end_headers()
+                return
+            result = get_volume()
+            self.send_response(200)
+            self.send_header('Content-type', 'application/json')
+            self.end_headers()
+            self.wfile.write(json.dumps(result).encode())
+            return
+
+        if path == '/api/monitor':
+            key = query.get('key', [''])[0]
+            if key != SECRET_KEY:
+                self.send_response(401)
+                self.end_headers()
+                return
+            result = get_monitor_data()
+            self.send_response(200)
+            self.send_header('Content-type', 'application/json')
+            self.end_headers()
+            self.wfile.write(json.dumps(result).encode())
+            return
+
         if path == '/api/apps':
             key = query.get('key', [''])[0]
             if key != SECRET_KEY:
@@ -453,6 +562,8 @@ class NeoShellHandler(BaseHTTPRequestHandler):
             self.end_headers()
             return
 
+        response = {"success": True}
+
         if path == '/api/lock':
             run_cmd('rundll32.exe user32.dll,LockWorkStation')
 
@@ -498,6 +609,42 @@ class NeoShellHandler(BaseHTTPRequestHandler):
         elif path == '/api/media/stop':
             media_stop()
 
+        elif path == '/api/volume/set':
+            level = int(query.get('level', ['50'])[0])
+            response = set_volume(level)
+
+        elif path == '/api/volume/mute':
+            response = toggle_mute()
+
+        elif path == '/api/command':
+            content_length = int(self.headers.get('Content-Length', 0))
+            post_data = self.rfile.read(content_length) if content_length > 0 else b'{}'
+            try:
+                data = json.loads(post_data.decode('utf-8'))
+                cmd = data.get('cmd', '')
+                if cmd:
+                    result = run_cmd(cmd)
+                    response = {"success": result["success"], "output": result.get("output", "")}
+                else:
+                    response = {"success": False, "error": "No command"}
+            except Exception as e:
+                response = {"success": False, "error": str(e)}
+
+        elif path == '/api/command/batch':
+            content_length = int(self.headers.get('Content-Length', 0))
+            post_data = self.rfile.read(content_length) if content_length > 0 else b'{}'
+            try:
+                data = json.loads(post_data.decode('utf-8'))
+                commands = data.get('commands', [])
+                results = []
+                for cmd in commands:
+                    if cmd.strip():
+                        r = run_cmd(cmd)
+                        results.append({"cmd": cmd, "success": r["success"]})
+                response = {"success": True, "results": results}
+            except Exception as e:
+                response = {"success": False, "error": str(e)}
+
         elif path.startswith('/api/run/'):
             filename = urllib.parse.unquote(path.split('/')[-1])
             file_path = APPS_DIR / filename
@@ -515,7 +662,7 @@ class NeoShellHandler(BaseHTTPRequestHandler):
         self.send_response(200)
         self.send_header('Content-type', 'application/json')
         self.end_headers()
-        self.wfile.write(json.dumps({"success": True}).encode())
+        self.wfile.write(json.dumps(response).encode())
 
     def log_message(self, format, *args):
         pass
@@ -1438,7 +1585,6 @@ def main():
             ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("neoshell.remote.desktop")
         except:
             pass
-
 
     threading.Thread(target=check_for_updates, daemon=True).start()
 
