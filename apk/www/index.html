@@ -13,7 +13,7 @@
 </head>
 <body>
 
-
+<!-- SPLASH -->
 <div id="splash">
     <img src="logo.png" class="splash-logo-img" alt="NeoShell" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" />
     <div class="splash-logo" style="display:none;">N</div>
@@ -22,7 +22,36 @@
     <div class="splash-loader"><span></span><span></span><span></span></div>
 </div>
 
+<!-- PIN PAGE -->
+<div id="pinPage">
+    <div class="pin-container">
+        <div class="pin-logo">
+            <i class="ph-light ph-lock-key"></i>
+        </div>
+        <div class="pin-title">Введите PIN-код</div>
+        <div class="pin-dots" id="pinDots">
+            <span></span><span></span><span></span><span></span>
+        </div>
+        <div class="pin-error" id="pinError"></div>
+        <div class="pin-keypad">
+            <button class="pin-key" onclick="pinInput('1')">1</button>
+            <button class="pin-key" onclick="pinInput('2')">2</button>
+            <button class="pin-key" onclick="pinInput('3')">3</button>
+            <button class="pin-key" onclick="pinInput('4')">4</button>
+            <button class="pin-key" onclick="pinInput('5')">5</button>
+            <button class="pin-key" onclick="pinInput('6')">6</button>
+            <button class="pin-key" onclick="pinInput('7')">7</button>
+            <button class="pin-key" onclick="pinInput('8')">8</button>
+            <button class="pin-key" onclick="pinInput('9')">9</button>
+            <button class="pin-key empty"></button>
+            <button class="pin-key" onclick="pinInput('0')">0</button>
+            <button class="pin-key" onclick="pinBackspace()"><i class="ph-light ph-backspace"></i></button>
+        </div>
+        <button class="pin-forgot" onclick="openPinResetDialog()">Забыли пароль?</button>
+    </div>
+</div>
 
+<!-- APP -->
 <div id="app">
     <header class="header">
         <button class="header-btn" onclick="toggleDrawer()">
@@ -46,12 +75,12 @@
     </button>
 </div>
 
-
+<!-- DRAWER -->
 <div class="drawer-overlay" id="drawerOverlay" onclick="toggleDrawer()"></div>
 <div class="drawer" id="drawer">
     <div class="drawer-header">
         <div class="drawer-logo">NeoShell</div>
-        <div class="drawer-sub">Версия <span class="app-version">2.2</span></div>
+        <div class="drawer-sub">Версия <span class="app-version">2.3</span></div>
     </div>
     <div class="drawer-menu">
         <div class="drawer-item" onclick="toggleDrawer();openSettings()">
@@ -66,7 +95,7 @@
     </div>
 </div>
 
-
+<!-- ADD MENU -->
 <div class="sheet-overlay" id="addMenuOverlay" onclick="closeAddMenu()">
     <div class="sheet add-menu-sheet" onclick="event.stopPropagation()">
         <div class="sheet-handle"></div>
@@ -92,7 +121,7 @@
     </div>
 </div>
 
-
+<!-- QUICK SHEET (долгий тап) -->
 <div class="sheet-overlay" id="sheetOverlay" onclick="closeActions()">
     <div class="sheet" onclick="event.stopPropagation()">
         <div class="sheet-handle"></div>
@@ -106,41 +135,14 @@
             </button>
         </div>
 
-        <div class="cmd-grid">
-            <div class="cmd-btn" onclick="sendCmd('explorer')">
-                <span class="icon"><i class="ph-light ph-folder-open"></i></span>
-                <span class="label">Проводник</span>
-            </div>
-            <div class="cmd-btn" onclick="sendCmd('minimize_all')">
-                <span class="icon"><i class="ph-light ph-desktop"></i></span>
-                <span class="label">Свернуть</span>
-            </div>
-            <div class="cmd-btn" onclick="sendCmd('task_manager')">
-                <span class="icon"><i class="ph-light ph-chart-line"></i></span>
-                <span class="label">Диспетчер</span>
-            </div>
-            <div class="cmd-btn" onclick="sendCmd('close_app')">
-                <span class="icon"><i class="ph-light ph-x-circle"></i></span>
-                <span class="label">Закрыть</span>
-            </div>
-            <div class="cmd-btn" onclick="openBrowserDialog()">
-                <span class="icon"><i class="ph-light ph-browser"></i></span>
-                <span class="label">Браузер</span>
-            </div>
-            <div class="cmd-btn" onclick="openAppsPage()">
-                <span class="icon"><i class="ph-light ph-grid-four"></i></span>
-                <span class="label">Приложения</span>
-            </div>
-        </div>
-
         <div class="power-row">
-            <div class="power-btn" onclick="sendCmdWithConfirm('sleep', 'Перевести в сон?')">
-                <i class="ph-light ph-moon"></i>
-                <span>Сон</span>
-            </div>
             <div class="power-btn" onclick="sendCmdWithConfirm('lock', 'Заблокировать ПК?')">
                 <i class="ph-light ph-lock-simple"></i>
                 <span>Блок</span>
+            </div>
+            <div class="power-btn" onclick="sendCmdWithConfirm('sleep', 'Перевести в сон?')">
+                <i class="ph-light ph-moon"></i>
+                <span>Сон</span>
             </div>
             <div class="power-btn warn" onclick="sendCmdWithConfirm('reboot', 'Перезагрузить?')">
                 <i class="ph-light ph-arrows-clockwise"></i>
@@ -153,8 +155,8 @@
         </div>
 
         <div class="sheet-actions">
-            <button class="sheet-btn" onclick="openEditDialog()">
-                <i class="ph-light ph-pencil"></i> Редактировать
+            <button class="sheet-btn" onclick="openDevicePageFromSheet()">
+                <i class="ph-light ph-arrow-right"></i> Открыть страницу ПК
             </button>
             <button class="sheet-btn danger" onclick="unpairDevice()">
                 <i class="ph-light ph-trash"></i> Разорвать
@@ -163,7 +165,167 @@
     </div>
 </div>
 
+<!-- DEVICE PAGE -->
+<div id="devicePage">
+    <div class="device-page-header">
+        <button class="header-btn" onclick="closeDevicePage()">
+            <i class="ph-light ph-arrow-left"></i>
+        </button>
+        <div class="device-page-title">
+            <div class="device-page-name" id="dpName">ПК</div>
+            <div class="device-page-status" id="dpStatus">—</div>
+        </div>
+        <button class="header-btn" onclick="refreshDevicePage()">
+            <i class="ph-light ph-arrows-clockwise"></i>
+        </button>
+    </div>
 
+    <div class="device-page-content">
+        <!-- Медиа-карточка -->
+        <div class="media-card" id="mediaCard" style="display:none;">
+            <div class="media-now-playing">
+                <div class="media-info">
+                    <div class="media-title" id="mediaTitle">—</div>
+                    <div class="media-artist" id="mediaArtist">—</div>
+                    <div class="media-album" id="mediaAlbum"></div>
+                </div>
+            </div>
+            <div class="media-controls">
+                <button class="media-btn" onclick="mediaCmd('prev')"><i class="ph-light ph-skip-back"></i></button>
+                <button class="media-btn play" onclick="mediaCmd('playpause')" id="mediaPlayBtn"><i class="ph-light ph-play"></i></button>
+                <button class="media-btn" onclick="mediaCmd('next')"><i class="ph-light ph-skip-forward"></i></button>
+                <button class="media-btn" onclick="mediaCmd('stop')"><i class="ph-light ph-stop"></i></button>
+            </div>
+        </div>
+
+        <!-- Мониторинг -->
+        <div class="monitor-card" id="monitorCard">
+            <div class="monitor-title">
+                <i class="ph-light ph-chart-line"></i>
+                <span>Статус ПК</span>
+            </div>
+            <div class="monitor-item">
+                <span class="monitor-label">CPU</span>
+                <div class="monitor-bar"><div class="monitor-fill" id="cpuBar" style="width:0%"></div></div>
+                <span class="monitor-value" id="cpuValue">—%</span>
+            </div>
+            <div class="monitor-item">
+                <span class="monitor-label">RAM</span>
+                <div class="monitor-bar"><div class="monitor-fill" id="ramBar" style="width:0%"></div></div>
+                <span class="monitor-value" id="ramValue">—%</span>
+            </div>
+            <div class="monitor-item">
+                <span class="monitor-label">DISK</span>
+                <div class="monitor-bar"><div class="monitor-fill" id="diskBar" style="width:0%"></div></div>
+                <span class="monitor-value" id="diskValue">—%</span>
+            </div>
+            <div class="monitor-temp" id="tempRow" style="display:none;">
+                <i class="ph-light ph-thermometer"></i>
+                <span id="tempValue">—°C</span>
+            </div>
+        </div>
+
+        <!-- Громкость -->
+        <div class="volume-card">
+            <div class="volume-header">
+                <i class="ph-light ph-speaker-high" id="volumeIcon"></i>
+                <span>Громкость</span>
+                <span class="volume-percent" id="volumePercent">—%</span>
+            </div>
+            <div class="volume-slider-row">
+                <input type="range" id="volumeSlider" min="0" max="100" value="50" class="volume-slider" oninput="onVolumeInput(this.value)" onchange="onVolumeChange(this.value)" />
+            </div>
+        </div>
+
+        <!-- Команды -->
+        <div class="device-commands">
+            <div class="section-title">Команды</div>
+            <div class="cmd-grid">
+                <div class="cmd-btn" onclick="sendCmd('explorer')">
+                    <span class="icon"><i class="ph-light ph-folder-open"></i></span>
+                    <span class="label">Проводник</span>
+                </div>
+                <div class="cmd-btn" onclick="sendCmd('minimize_all')">
+                    <span class="icon"><i class="ph-light ph-desktop"></i></span>
+                    <span class="label">Свернуть</span>
+                </div>
+                <div class="cmd-btn" onclick="sendCmd('task_manager')">
+                    <span class="icon"><i class="ph-light ph-chart-line"></i></span>
+                    <span class="label">Диспетчер</span>
+                </div>
+                <div class="cmd-btn" onclick="sendCmd('close_app')">
+                    <span class="icon"><i class="ph-light ph-x-circle"></i></span>
+                    <span class="label">Закрыть</span>
+                </div>
+                <div class="cmd-btn" onclick="openBrowserDialog()">
+                    <span class="icon"><i class="ph-light ph-browser"></i></span>
+                    <span class="label">Браузер</span>
+                </div>
+                <div class="cmd-btn" onclick="openAppsPage()">
+                    <span class="icon"><i class="ph-light ph-grid-four"></i></span>
+                    <span class="label">Приложения</span>
+                </div>
+                <div class="cmd-btn" onclick="openCommandsPage()">
+                    <span class="icon"><i class="ph-light ph-lightning"></i></span>
+                    <span class="label">Мои команды</span>
+                </div>
+                <div class="cmd-btn" onclick="openEditDialog()">
+                    <span class="icon"><i class="ph-light ph-pencil"></i></span>
+                    <span class="label">Изменить</span>
+                </div>
+            </div>
+
+            <!-- Питание в одну строку снизу -->
+            <div class="power-row" style="margin-top: 16px;">
+                <div class="power-btn" onclick="sendCmdWithConfirm('lock', 'Заблокировать ПК?')">
+                    <i class="ph-light ph-lock-simple"></i>
+                    <span>Блок</span>
+                </div>
+                <div class="power-btn" onclick="sendCmdWithConfirm('sleep', 'Перевести в сон?')">
+                    <i class="ph-light ph-moon"></i>
+                    <span>Сон</span>
+                </div>
+                <div class="power-btn warn" onclick="sendCmdWithConfirm('reboot', 'Перезагрузить?')">
+                    <i class="ph-light ph-arrows-clockwise"></i>
+                    <span>Рестарт</span>
+                </div>
+                <div class="power-btn danger" onclick="sendCmdWithConfirm('shutdown', 'Выключить?')">
+                    <i class="ph-light ph-power"></i>
+                    <span>Выкл</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Действия -->
+        <div class="device-page-actions">
+            <button class="sheet-btn danger" onclick="unpairDevice()">
+                <i class="ph-light ph-trash"></i> Разорвать сопряжение
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- COMMANDS PAGE -->
+<div id="commandsPage">
+    <div class="commands-header">
+        <button class="header-btn" onclick="closeCommandsPage()">
+            <i class="ph-light ph-arrow-left"></i>
+        </button>
+        <div class="commands-title">Мои команды</div>
+        <button class="header-btn" onclick="openAddCommandDialog()">
+            <i class="ph-light ph-plus"></i>
+        </button>
+    </div>
+
+    <div class="commands-search">
+        <i class="ph-light ph-magnifying-glass"></i>
+        <input type="text" id="commandsSearch" placeholder="Поиск..." oninput="filterCommands()" />
+    </div>
+
+    <div class="commands-list" id="commandsList"></div>
+</div>
+
+<!-- APPS PAGE -->
 <div id="appsPage">
     <div class="apps-header">
         <button class="header-btn" onclick="closeAppsPage()">
@@ -181,7 +343,7 @@
     <div class="apps-grid" id="appsGrid"></div>
 </div>
 
-
+<!-- SETTINGS PAGE -->
 <div id="settingsPage">
     <div class="page-header">
         <button class="header-btn" onclick="closeSettings()">
@@ -210,11 +372,33 @@
             <label class="toggle"><input type="checkbox" id="confirmLock" checked><span class="slider"></span></label>
         </div>
     </div>
+
     <div class="settings-group">
         <div class="settings-group-label">Уведомления</div>
         <div class="settings-item">
             <div class="label">Показывать статус ПК</div>
             <label class="toggle"><input type="checkbox" id="notificationsEnabled" checked><span class="slider"></span></label>
+        </div>
+    </div>
+
+    <div class="settings-group">
+        <div class="settings-group-label">Безопасность</div>
+        <div class="settings-item">
+            <div class="label">PIN-код</div>
+            <button class="settings-btn-small" id="pinBtn" onclick="openPinSettings()">Установить</button>
+        </div>
+        <div class="settings-item">
+            <div>
+                <div class="label">Автоблокировка</div>
+                <div class="desc">Через сколько минут блокировать</div>
+            </div>
+            <select class="settings-select" id="autolockSelect" onchange="onAutolockChange()">
+                <option value="0">Выкл</option>
+                <option value="1">1 мин</option>
+                <option value="5">5 мин</option>
+                <option value="15">15 мин</option>
+                <option value="30">30 мин</option>
+            </select>
         </div>
     </div>
 
@@ -225,7 +409,7 @@
     </div>
 </div>
 
-
+<!-- ABOUT PAGE -->
 <div id="aboutPage">
     <div class="page-header">
         <button class="header-btn" onclick="closeAbout()">
@@ -241,7 +425,7 @@
             <span class="about-logo-fallback" style="display:none;">N</span>
         </div>
         <div class="about-name">NeoShell</div>
-        <div class="about-version">Версия <span class="app-version">2.2</span></div>
+        <div class="about-version">Версия <span class="app-version">2.3</span></div>
     </div>
 
     <div class="about-section">
@@ -295,7 +479,7 @@
     </div>
 </div>
 
-
+<!-- DIALOGS -->
 <div class="dialog-overlay" id="updateDialog">
     <div class="dialog">
         <div class="dialog-title">Доступно обновление</div>
@@ -307,7 +491,6 @@
     </div>
 </div>
 
-
 <div class="dialog-overlay" id="addDeviceDialog">
     <div class="dialog">
         <div class="dialog-title">Добавить ПК</div>
@@ -318,7 +501,7 @@
         </div>
         <div class="dialog-field">
             <label>IP-адрес</label>
-            <input type="text" id="addIp" placeholder="192.168.1.9" />
+            <input type="text" id="addIp" placeholder="192.168.1.100" />
         </div>
         <div class="dialog-field">
             <label>Порт</label>
@@ -334,7 +517,6 @@
         </div>
     </div>
 </div>
-
 
 <div class="dialog-overlay" id="editDialog">
     <div class="dialog">
@@ -362,7 +544,6 @@
     </div>
 </div>
 
-
 <div class="dialog-overlay" id="browserDialog">
     <div class="dialog">
         <div class="dialog-title">Открыть в браузере</div>
@@ -377,7 +558,6 @@
     </div>
 </div>
 
-
 <div class="dialog-overlay" id="confirmDialog">
     <div class="dialog dialog-confirm">
         <div class="confirm-icon">
@@ -389,6 +569,105 @@
             <button class="dialog-btn secondary" onclick="closeConfirm(false)">Отмена</button>
             <button class="dialog-btn danger" onclick="closeConfirm(true)" id="confirmYesBtn">Да</button>
         </div>
+    </div>
+</div>
+
+<!-- ADD COMMAND DIALOG -->
+<div class="dialog-overlay" id="addCommandDialog">
+    <div class="dialog">
+        <div class="dialog-title" id="commandDialogTitle">Новая команда</div>
+        <div class="dialog-field">
+            <label>Название</label>
+            <input type="text" id="cmdName" placeholder="Запустить Steam" />
+        </div>
+        <div class="dialog-field">
+            <label>Иконка</label>
+            <div class="icon-picker" id="iconPicker">
+                <span class="icon-option selected" onclick="selectIcon(this, '⚡')">⚡</span>
+                <span class="icon-option" onclick="selectIcon(this, '🎮')">🎮</span>
+                <span class="icon-option" onclick="selectIcon(this, '📁')">📁</span>
+                <span class="icon-option" onclick="selectIcon(this, '🎵')">🎵</span>
+                <span class="icon-option" onclick="selectIcon(this, '🌐')">🌐</span>
+                <span class="icon-option" onclick="selectIcon(this, '📸')">📸</span>
+                <span class="icon-option" onclick="selectIcon(this, '💻')">💻</span>
+                <span class="icon-option" onclick="selectIcon(this, '🎯')">🎯</span>
+                <span class="icon-option" onclick="selectIcon(this, '🔧')">🔧</span>
+                <span class="icon-option" onclick="selectIcon(this, '📝')">📝</span>
+                <span class="icon-option" onclick="selectIcon(this, '🔥')">🔥</span>
+                <span class="icon-option" onclick="selectIcon(this, '🚀')">🚀</span>
+            </div>
+        </div>
+        <div class="dialog-field">
+            <label>Команды (каждая с новой строки)</label>
+            <textarea id="cmdCommands" class="dialog-textarea" placeholder="start steam://open&#10;taskkill /F /IM chrome.exe"></textarea>
+        </div>
+        <div class="dialog-field">
+            <label class="checkbox-label">
+                <input type="checkbox" id="cmdConfirm" />
+                Спрашивать подтверждение
+            </label>
+        </div>
+        <div class="dialog-actions">
+            <button class="dialog-btn secondary" onclick="closeAddCommandDialog()">Отмена</button>
+            <button class="dialog-btn primary" onclick="saveCommand()">Сохранить</button>
+        </div>
+    </div>
+</div>
+
+<!-- PIN SETUP DIALOG -->
+<div class="dialog-overlay" id="pinSetupDialog">
+    <div class="dialog">
+        <div class="dialog-title" id="pinSetupTitle">Установить PIN</div>
+        <div class="dialog-desc" id="pinSetupDesc">Введите 4-значный код</div>
+        <div class="dialog-field">
+            <input type="password" id="pinInput1" maxlength="4" inputmode="numeric" placeholder="••••" class="pin-input-field" />
+        </div>
+        <div class="dialog-field" id="pinInput2Wrap" style="display:none;">
+            <input type="password" id="pinInput2" maxlength="4" inputmode="numeric" placeholder="Повторите" class="pin-input-field" />
+        </div>
+        <div class="dialog-actions">
+            <button class="dialog-btn secondary" onclick="closePinSetupDialog()">Отмена</button>
+            <button class="dialog-btn primary" onclick="submitPinSetup()">Далее</button>
+        </div>
+    </div>
+</div>
+
+<!-- PIN RESET DIALOG -->
+<div class="dialog-overlay" id="pinResetDialog">
+    <div class="dialog dialog-confirm">
+        <div class="confirm-icon">
+            <i class="ph-light ph-warning-circle"></i>
+        </div>
+        <div class="dialog-title">Сбросить пароль?</div>
+        <div class="dialog-desc">
+            Будут удалены:<br>
+            • Все сохранённые ПК<br>
+            • Все кастомные команды<br>
+            • Все настройки
+        </div>
+        <div class="dialog-actions">
+            <button class="dialog-btn secondary" onclick="closePinResetDialog()">Отмена</button>
+            <button class="dialog-btn danger" onclick="confirmPinReset()">Сбросить</button>
+        </div>
+    </div>
+</div>
+
+
+<div class="dialog-overlay" id="commandMenu">
+    <div class="dialog dialog-command-menu">
+        <div class="dialog-title" id="commandMenuTitle">Команда</div>
+        <div class="command-menu-actions">
+            <button class="command-menu-item" onclick="menuRunCommand()">
+                <i class="ph-light ph-play"></i> Выполнить
+            </button>
+            <button class="command-menu-item" onclick="menuEditCommand()">
+                <i class="ph-light ph-pencil"></i> Редактировать
+            </button>
+            <button class="command-menu-item danger" onclick="menuDeleteCommand()">
+                <i class="ph-light ph-trash"></i> Удалить
+            </button>
+        </div>
+        <button class="dialog-btn secondary" onclick="closeCommandMenu()" style="margin-top:16px;width:100%;">Отмена</button>
     </div>
 </div>
 
