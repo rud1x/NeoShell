@@ -17,7 +17,7 @@
   <br>
 
   <a href="https://github.com/rud1x/NeoShell/releases/latest">
-    <img src="https://img.shields.io/badge/Release-v2.2-ffcc00?style=for-the-badge&logo=github&logoColor=white" alt="Release"/>
+    <img src="https://img.shields.io/badge/Release-v2.3-ffcc00?style=for-the-badge&logo=github&logoColor=white" alt="Release"/>
   </a>
   <a href="https://t.me/therudix">
     <img src="https://img.shields.io/badge/Telegram-Contact-26A5E4?style=for-the-badge&logo=telegram&logoColor=white" alt="Telegram"/>
