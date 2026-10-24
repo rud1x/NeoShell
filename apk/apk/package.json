@@ -1,0 +1,26 @@
+{
+  "name": "apk",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@capacitor/android": "^8.5.2",
+    "@capacitor/barcode-scanner": "^3.1.2",
+    "@capacitor/camera": "^8.2.4",
+    "@capacitor/cli": "^8.5.2",
+    "@capacitor/core": "^8.5.2",
+    "@capacitor/local-notifications": "^8.3.1",
+    "@capawesome-team/capacitor-android-foreground-service": "^8.1.0"
+  },
+  "devDependencies": {
+    "@ea-utilities/build-capacitor": "^1.0.6",
+    "typescript": "^7.0.2"
+  }
+}
